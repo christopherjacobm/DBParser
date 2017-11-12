@@ -30,11 +30,30 @@ public class parser {
                 String[] createArr = Arrays.copyOfRange(arr, 2, arr.length);
                 create(createArr);
             break;
+            case "insert":
+                String[] insertArr = Arrays.copyOfRange(arr, 2, arr.length);
+                insert(insertArr);
+            break;
         }
     }
 
     public static void create(String[] arr) {
         System.out.println("create called with array: ");
+        for (String str: arr)
+            System.out.println(str);
+        String relation_name = arr[0];
+        ArrayList<String> field_names=new ArrayList<String>();
+        ArrayList<FieldType> field_types=new ArrayList<FieldType>();
+        if (arr[1].equals("(")){
+            String[] attributeTypeListArr = Arrays.copyOfRange(arr, 2, arr.length-1);
+            attributeTypeList(attributeTypeListArr,field_names,field_types);
+        }
+        createTable(relation_name,field_names,field_types);
+    }
+    
+    // insert statement
+    public static void insert(String[] arr) {
+        System.out.println("insert called with array: ");
         for (String str: arr)
             System.out.println(str);
         String relation_name = arr[0];

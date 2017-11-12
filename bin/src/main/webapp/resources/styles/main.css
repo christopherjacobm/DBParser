@@ -1,0 +1,14 @@
+.update-button {
+	float: right; !important
+}
+
+.custom-nav-items{
+	float: right; !important
+}
+
+
+a.bg-primary.text-white.nav-item.custom-nav-items {
+    margin-left: 25px;
+    padding:8px;
+}
+
