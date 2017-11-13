@@ -3,10 +3,6 @@ package com.db.parser;
 import com.db.storageManager.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Random;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class parser {
 	static SchemaManager schema_manager;
@@ -18,13 +14,16 @@ public class parser {
 
 		// String[] tokens= lex("create TABLE course ( sid INT , homework INT , project
 		// INT , exam INT , grade STR20 )");
-		String[] tokens = lex("create TABLE t1 ( id INT , name STR20 )");
+		//String[] tokens = lex("create TABLE t1 ( id INT , name STR20 )");
 		
-		Relation tableName = parse(tokens);
+		//Relation tableName = parse(tokens);
+		
+		createStatement create = new createStatement();
+		create.parseCreateStatement(mem, "create TABLE tablename(name INT, id str20)", schema_manager);
 		
 		// process the insert statement
-		InsertStatement insert = new InsertStatement();
-		insert.parseInsertStatement(tableName, mem, "insert into tablename(id, name) VALUES(1, \"Sukhdeep\")");
+		//InsertStatement insert = new InsertStatement();
+		//insert.parseInsertStatement(tableName, mem, "insert into tablename(id, name) VALUES(1, \"Sukhdeep\")");
 	}
 
 	public static String[] lex(String str) {
@@ -47,8 +46,7 @@ public class parser {
 			// insert(insertArr);
 			//Matcher match = parseInsertStatement("insert into tablename(name,    class,   id) VALUES(\"Sukhdeep\", null, 1)");
 			//createTuple(ref, e, MainMemory mem, String[] attributeNames, String[] attributeValues
-			return null;
-			
+			return null;			
 		}
 		return null;
 	}
