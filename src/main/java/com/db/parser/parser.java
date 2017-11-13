@@ -20,9 +20,11 @@ public class parser {
 		// INT , exam INT , grade STR20 )");
 		String[] tokens = lex("create TABLE t1 ( id INT , name STR20 )");
 		
-		Relation ref = parse(tokens);
-		parseInsertStatement(ref, mem, "insert into tablename(id, name) VALUES(1, \"Sukhdeep\")");
-		//createTuple(ref, mem, match.group(2), match.group(3));
+		Relation tableName = parse(tokens);
+		
+		// process the insert statement
+		InsertStatement insert = new InsertStatement();
+		insert.parseInsertStatement(tableName, mem, "insert into tablename(id, name) VALUES(1, \"Sukhdeep\")");
 	}
 
 	public static String[] lex(String str) {
@@ -43,7 +45,7 @@ public class parser {
 		case "insert":
 			// String[] insertArr = Arrays.copyOfRange(arr, 2, arr.length);
 			// insert(insertArr);
-			//Matcher match = parseInsertStatement("insert into tablename(name,    class,   id) VALUES(\"raj\", null, 1)");
+			//Matcher match = parseInsertStatement("insert into tablename(name,    class,   id) VALUES(\"Sukhdeep\", null, 1)");
 			//createTuple(ref, e, MainMemory mem, String[] attributeNames, String[] attributeValues
 			return null;
 			
@@ -51,8 +53,6 @@ public class parser {
 		return null;
 	}
 	
-
-
 	public static Relation create(String[] arr) {
 		System.out.println("create called with array: ");
 		for (String str : arr)
@@ -67,36 +67,7 @@ public class parser {
 		Relation relation_ref = createTable(relation_name, field_names, field_types);
 		return relation_ref;
 	}
-
-	// insert statement
-	public static Matcher parseInsertStatement(Relation ref, MainMemory mem, String statement) {
-		String regexValue = "^\\s*insert\\s+into\\s+([a-z][a-z0-9]*)\\s*\\((\\s*[a-z][a-z0-9]*\\s*(?:,\\s*[a-z][a-z0-9]*\\s*)*)\\)\\s+values\\s*\\(\\s*([a-z0-9\"]*\\s*(?:,\\s*[a-z0-9\"]*)*)\\)$";
-		Pattern regex = Pattern.compile(regexValue, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
-		Matcher match = regex.matcher(statement);
-
-		if (match.find()) {
-			System.out.println("value is " + match.group(1) + " " + match.group(2) + " " + match.group(3));
-			String[] attributeNames = trimAndSplitByComma(match.group(2));
-			String[] attributeValues = trimAndSplitByComma(match.group(3));
-			//return match;
-			createTuple(ref, mem, attributeNames, attributeValues);
-		}
-		return null;
-		
-	}
-
-	public static String[] trimAndSplitByComma(String str) {
-		String trimed = str.trim();
-		String[] arr = trimed.split(",");
-		String temp = "";
-		for (int i = 0; i < arr.length; i++) {
-			arr[i] = arr[i].trim();
-			arr[i] = arr[i].replaceAll("\"", "");
-		}
-		System.out.println(Arrays.toString(arr));
-		return arr;
-	}
-
+	
 	public static void attributeTypeList(String[] arr, ArrayList<String> field_names,
 			ArrayList<FieldType> field_types) {
 		if (arr.length > 2) {// there are more attributes
@@ -132,80 +103,5 @@ public class parser {
 		System.out.print("The table currently have " + relation_reference.getNumOfBlocks() + " blocks" + "\n");
 		System.out.print("The table currently have " + relation_reference.getNumOfTuples() + " tuples" + "\n" + "\n");
 		return relation_reference;
-	}
-
-	public static void createTuple(Relation relation_reference, MainMemory mem, String[] attributeNames, String[] attributeValues) {
-
-		// Create a Tuple of the Relation using the Relation pointer
-		Tuple tuple = relation_reference.createTuple();
-		Schema schema = relation_reference.getSchema();
-		FieldType type; 
-		int value;
-		for(int i = 0; i < attributeNames.length; i++) {
-			if(attributeValues[i].equals("null") || attributeValues[i].equals("NULL")) {
-				
-			} else {
-				type = schema.getFieldType(attributeNames[i]);
-				System.out.println("field type " + type);
-				if (type.equals(FieldType.INT)) {
-					value = Integer.parseInt(attributeValues[i]);
-					tuple.setField(attributeNames[i], value);
-				} else {
-					tuple.setField(attributeNames[i], attributeValues[i]);
-				}
-			}
-		}
-		
-		
-		// Set up a block in the memory and get a pointer to that empty memory Block
-		Random rand = new Random();
-		System.out.print("Getting a memory block " + "\n");
-		// access to a random memory block
-		Block block_reference = mem.getBlock(rand.nextInt(10) + 1);
-
-		// grab an empty memory block
-		while (!block_reference.isEmpty()) {
-			block_reference = mem.getBlock(rand.nextInt(10) + 1);
-		}
-
-		block_reference.appendTuple(tuple);
-		printTuple(tuple);
-
-	}
-
-	// Create a tuple: Create a Tuple of the Relation using the Relation pointer. It
-	// may sound
-	// weird, but you have to store the newly created Tuple to the simulated memory
-	// to complete
-	// this step. First get a pointer to an empty memory Block, say block 7, using
-	// the MainMemory
-	// object. Store the created Tuple by ”appending” it to the empty memory Block
-	// 7.
-
-	// Print the information about the tuple
-	private static void printTuple(Tuple tuple) {
-
-		System.out.print("Created a tuple " + tuple + " of ExampleTable3 through the relation" + "\n");
-		System.out.print("The tuple is invalid? " + (tuple.isNull() ? "TRUE" : "FALSE") + "\n");
-		Schema tuple_schema = tuple.getSchema();
-		System.out.print("The tuple has schema" + "\n");
-		System.out.print(tuple_schema + "\n");
-		System.out.print("A block can allow at most " + tuple.getTuplesPerBlock() + " such tuples" + "\n");
-
-		System.out.print("The tuple has fields: " + "\n");
-		for (int i = 0; i < tuple.getNumOfFields(); i++) {
-			if (tuple_schema.getFieldType(i) == FieldType.INT)
-				System.out.print(tuple.getField(i) + "\t");
-			else
-				System.out.print(tuple.getField(i) + "\t");
-		}
-		System.out.print("\n");
-
-//		System.out.print("The tuple has fields: " + "\n");
-//		System.out.print(tuple.getField("id") + "\t");
-//		System.out.print(tuple.getField("f2") + "\t");
-//		System.out.print(tuple.getField("f3") + "\t");
-//		System.out.print(tuple.getField("f4") + "\t");
-//		System.out.print("\n" + "\n");
 	}
 }
