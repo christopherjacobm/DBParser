@@ -3,6 +3,8 @@ package com.db.parser;
 import com.db.storageManager.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class parser {
 	static SchemaManager schema_manager;
@@ -20,10 +22,24 @@ public class parser {
 		
 		createStatement create = new createStatement();
 		create.parseCreateStatement(mem, "create TABLE tablename(name INT, id str20)", schema_manager);
+		getFirstWord("select TABLE tablename(name INT, id str20)");
 		
 		// process the insert statement
 		//InsertStatement insert = new InsertStatement();
 		//insert.parseInsertStatement(tableName, mem, "insert into tablename(id, name) VALUES(1, \"Sukhdeep\")");
+	}
+	
+	// select the operation using
+	private static void getFirstWord(String statement) {
+		String regexValue = "^\\s*(create|insert|select|drop|delete)\\s+";
+		Pattern regex = Pattern.compile(regexValue, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+		Matcher match = regex.matcher(statement);
+
+		// if the string is matched
+		if (match.find()) {
+			System.out.println("value is " + match.group(1));
+		}
+		
 	}
 
 	public static String[] lex(String str) {
