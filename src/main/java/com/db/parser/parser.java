@@ -20,26 +20,55 @@ public class parser {
 		
 		//Relation tableName = parse(tokens);
 		
-		createStatement create = new createStatement();
-		create.parseCreateStatement(mem, "create TABLE tablename(name INT, id str20)", schema_manager);
-		getFirstWord("select TABLE tablename(name INT, id str20)");
 		
+		//***********************************************************************************************
+		// process the create statement
+		createStatement create = new createStatement();
+		Relation relation_reference = create.parseCreateStatement(mem, "create TABLE tablename(id INT, name str20)", schema_manager);
+		String statementType = getStatementType("CREATE TABLE tablename(name INT, id str20)");
+		
+		//***********************************************************************************************
 		// process the insert statement
-		//InsertStatement insert = new InsertStatement();
-		//insert.parseInsertStatement(tableName, mem, "insert into tablename(id, name) VALUES(1, \"Sukhdeep\")");
+		InsertStatement insert = new InsertStatement();
+		insert.parseInsertStatement(relation_reference, mem, "insert into tablename(id, name) VALUES(1, \"Sukhdeep\")");
+		
+		//***********************************************************************************************
+		// process the drop statement
+		dropStatement drop = new dropStatement();
+		drop.parseDeleteStatement("drop table tablename");
 	}
 	
-	// select the operation using
-	private static void getFirstWord(String statement) {
-		String regexValue = "^\\s*(create|insert|select|drop|delete)\\s+";
+	// select the operation using regex
+	private static String getStatementType(String statement) {
+		String regexValue = "^\\s*(create|insert|select|drop|delete).*";
 		Pattern regex = Pattern.compile(regexValue, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 		Matcher match = regex.matcher(statement);
 
 		// if the string is matched
 		if (match.find()) {
 			System.out.println("value is " + match.group(1));
+			return  match.group(1);
 		}
+		return null;
 		
+	}
+	
+	public static void executeStatement(String statementType, String statement, MainMemory mem) {
+		switch (statementType) {
+		case "create":
+			createStatement create = new createStatement();
+			create.parseCreateStatement(mem, "create TABLE tablename(name INT, id str20)", schema_manager);
+		case "insert":
+			InsertStatement insert = new InsertStatement();
+			//insert.parseInsertStatement(relation_reference, mem, "insert into tablename(id, name) VALUES(1, \"Sukhdeep\")");		
+		case "select":
+			
+		case "drop":
+			dropStatement drop = new dropStatement();
+			drop.parseDeleteStatement(statement);
+		case "delete":	
+			
+		}
 	}
 
 	public static String[] lex(String str) {

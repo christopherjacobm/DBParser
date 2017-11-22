@@ -18,7 +18,7 @@ public class createStatement {
 	}
 	
 	// create statement
-	public void parseCreateStatement(MainMemory mem, String statement, SchemaManager schema_manager) {
+	public Relation parseCreateStatement(MainMemory mem, String statement, SchemaManager schema_manager) {
 		String regexValue = "^\\s*create\\s+table\\s+([a-z][0-9a-z]*)\\s*\\(([a-z][0-9a-z]*\\s+(?:STR20|INT)\\s*(?:,\\s*[a-z][0-9a-z]*\\s+(?:INT|STR20))*\\s*)\\)$";
 		Pattern regex = Pattern.compile(regexValue, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 		Matcher match = regex.matcher(statement);
@@ -42,7 +42,10 @@ public class createStatement {
 			Relation relation_reference = createTable(relation_name, schema_manager, field_names, field_types);
 			
 			printRelation(relation_reference);
+			
+			return relation_reference;
 		}	
+		return null;
 	}
 	
 	public ArrayList<String> getAttribute(String str, ArrayList<String> field_names, ArrayList<FieldType> field_types) {
@@ -98,3 +101,52 @@ public class createStatement {
 		System.out.print("The table currently have " + relation_reference.getNumOfTuples() + " tuples" + "\n" + "\n");
 	}
 }
+
+
+
+
+
+
+
+
+
+//
+//String statement = "create TABLE tablename(name INT, id str20)";
+//String statementType = getStatementType(statement);
+//executeStatement(statementType, statement, mem);
+//
+//
+//
+//
+//
+//
+////select the operation using
+//	private static String getStatementType(String statement) {
+//		String regexValue = "^\\s*(create|insert|select|drop|delete)\\s.*";
+//		Pattern regex = Pattern.compile(regexValue, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+//		Matcher match = regex.matcher(statement);
+//
+//		// if the string is matched
+//		if (match.find()) {
+//			System.out.println("value is " + match.group(1));
+//			return  match.group(1);
+//		}
+//		return null;
+//		
+//	}
+//	
+//	public static void executeStatement(String statementType, String statement, MainMemory mem) {
+//		switch (statementType) {
+//		case "create":
+//			System.out.println("Inside the case statement******************8");
+//			createStatement create = new createStatement();
+//			create.parseCreateStatement(mem, statement, schema_manager);
+//		case "insert":
+//			//InsertStatement insert = new InsertStatement();
+//			//insert.parseInsertStatement(tableName, mem, "insert into tablename(id, name) VALUES(1, \"Sukhdeep\")");
+//		case "select":
+//		case "drop":
+//		case "delete":
+//		
+//		}
+	//}

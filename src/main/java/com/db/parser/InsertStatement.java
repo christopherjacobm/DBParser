@@ -89,7 +89,8 @@ public class InsertStatement {
 		Random rand = new Random();
 		System.out.print("Getting a memory block " + "\n");
 		// access to a random memory block
-		Block block_reference = mem.getBlock(rand.nextInt(10) + 1);
+		int n = rand.nextInt(10) + 1;
+		Block block_reference = mem.getBlock(n);
 
 		// grab an empty memory block
 		while (!block_reference.isEmpty()) {
@@ -99,8 +100,13 @@ public class InsertStatement {
 		// add a tuple to the memory block
 		block_reference.appendTuple(tuple);
 		
+		// append the tuple to the end of the given relation using memory block n as output buffer
+	    appendTupleToRelation(relation_reference,mem,n,tuple);
+		
 		// print the added tuple
 		printTuple(tuple);
+		
+		printRelation(relation_reference);
 
 	}
 	
@@ -122,5 +128,46 @@ public class InsertStatement {
 		}
 		System.out.print("\n");
 	}
+	
+	// An example procedure of appending a tuple to the end of a relation
+	  // using memory block "memory_block_index" as output buffer
+	  private static void appendTupleToRelation(Relation relation_reference, MainMemory mem, int memory_block_index, Tuple tuple) {
+	    Block block_reference;
+	    if (relation_reference.getNumOfBlocks()==0) {
+	      System.out.print("The relation is empty" + "\n");
+	      System.out.print("Get the handle to the memory block " + memory_block_index + " and clear it" + "\n");
+	      block_reference=mem.getBlock(memory_block_index);
+	      block_reference.clear(); //clear the block
+	      block_reference.appendTuple(tuple); // append the tuple
+	      System.out.print("Write to the first block of the relation" + "\n");
+	      relation_reference.setBlock(relation_reference.getNumOfBlocks(),memory_block_index);
+	    } else {
+	      System.out.print("Read the last block of the relation into memory block 5:" + "\n");
+	      relation_reference.getBlock(relation_reference.getNumOfBlocks()-1,memory_block_index);
+	      block_reference=mem.getBlock(memory_block_index);
+
+	      if (block_reference.isFull()) {
+	        System.out.print("(The block is full: Clear the memory block and append the tuple)" + "\n");
+	        block_reference.clear(); //clear the block
+	        block_reference.appendTuple(tuple); // append the tuple
+	        System.out.print("Write to a new block at the end of the relation" + "\n");
+	        relation_reference.setBlock(relation_reference.getNumOfBlocks(),memory_block_index); //write back to the relation
+	      } else {
+	        System.out.print("(The block is not full: Append it directly)" + "\n");
+	        block_reference.appendTuple(tuple); // append the tuple
+	        System.out.print("Write to the last block of the relation" + "\n");
+	        relation_reference.setBlock(relation_reference.getNumOfBlocks()-1,memory_block_index); //write back to the relation
+	      }
+	    }
+	  }
+	  
+	// Print the information about the Relation
+		public void printRelation(Relation relation_reference) {
+			System.out.print("The table has name " + relation_reference.getRelationName() + "\n");
+			System.out.print("The table has schema: ........" + "\n");
+			System.out.print(relation_reference.getSchema() + "\n");
+			System.out.print("The table currently have " + relation_reference.getNumOfBlocks() + " blocks" + "\n");
+			System.out.print("The table currently have " + relation_reference.getNumOfTuples() + " tuples" + "\n" + "\n");
+		}
 
 }
