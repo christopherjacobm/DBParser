@@ -31,6 +31,10 @@ public class parser {
 		// process the insert statement
 		InsertStatement insert = new InsertStatement();
 		insert.parseInsertStatement(relation_reference, mem, "insert into tablename(id, name) VALUES(1, \"Sukhdeep\")");
+		insert.parseInsertStatement(relation_reference, mem, "insert into tablename(id, name) VALUES(2, \"Christopher\")");
+
+		SelectStatement select = new SelectStatement();
+		select.parseSelectStatement(mem,schema_manager, "SELECT names, id, name      from tablename" );
 		
 		//***********************************************************************************************
 		// process the drop statement
