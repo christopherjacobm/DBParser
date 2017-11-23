@@ -24,9 +24,6 @@ public class dropStatement {
 			Boolean tableDropped = schema_manager.deleteRelation(relation_name);
 			//printRelation(schema_manager.getRelation(relation_name));
 		}
-		else {
-			 System.err.print("deleteRelation ERROR: relation does not exist" + "\n");
-		}
 	}
 	
 	// Print the information about the Relation

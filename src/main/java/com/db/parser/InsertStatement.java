@@ -25,7 +25,7 @@ public class InsertStatement {
 
 		// if the string is matched
 		if (match.find()) {
-			System.out.println("value is " + match.group(1) + " " + match.group(2) + " " + match.group(3));
+			//System.out.println("value is " + match.group(1) + " " + match.group(2) + " " + match.group(3));
 			String[] attributeNames = trimAndSplitByComma(match.group(2));
 			String[] attributeValues = trimAndSplitByComma(match.group(3));
 			
@@ -49,7 +49,7 @@ public class InsertStatement {
 			// change "john" to john
 			arr[i] = arr[i].replaceAll("\"", "");
 		}
-		System.out.println(Arrays.toString(arr));
+		//System.out.println(Arrays.toString(arr));
 		return arr;
 	}
 	
@@ -72,7 +72,7 @@ public class InsertStatement {
 			} else {			
 				// grab the type of the field from the schema of the relation
 				type = schema.getFieldType(attributeNames[i]);
-				System.out.println("field type " + type);			
+				//System.out.println("field type " + type);			
 				// if the field type is int, change the field value from string to int
 				if (type.equals(FieldType.INT)) {
 					value = Integer.parseInt(attributeValues[i]);			
@@ -89,9 +89,9 @@ public class InsertStatement {
 	    appendTupleToRelation(relation_reference,mem,0,tuple);
 		
 		// print the added tuple
-		printTuple(tuple);
+		//printTuple(tuple);
 		
-		printRelation(relation_reference);
+		//printRelation(relation_reference);
 
 	}
 	
@@ -119,28 +119,28 @@ public class InsertStatement {
 	  private static void appendTupleToRelation(Relation relation_reference, MainMemory mem, int memory_block_index, Tuple tuple) {
 	    Block block_reference;
 	    if (relation_reference.getNumOfBlocks()==0) {
-	      System.out.print("The relation is empty" + "\n");
-	      System.out.print("Get the handle to the memory block " + memory_block_index + " and clear it" + "\n");
+	      //System.out.print("The relation is empty" + "\n");
+	      //System.out.print("Get the handle to the memory block " + memory_block_index + " and clear it" + "\n");
 	      block_reference=mem.getBlock(memory_block_index);
 	      block_reference.clear(); //clear the block
 	      block_reference.appendTuple(tuple); // append the tuple
-	      System.out.print("Write to the first block of the relation" + "\n");
+	      //System.out.print("Write to the first block of the relation" + "\n");
 	      relation_reference.setBlock(relation_reference.getNumOfBlocks(),memory_block_index);
 	    } else {
-	      System.out.print("Read the last block of the relation into memory block 5:" + "\n");
+	      //System.out.print("Read the last block of the relation into memory block 5:" + "\n");
 	      relation_reference.getBlock(relation_reference.getNumOfBlocks()-1,memory_block_index);
 	      block_reference=mem.getBlock(memory_block_index);
 
 	      if (block_reference.isFull()) {
-	        System.out.print("(The block is full: Clear the memory block and append the tuple)" + "\n");
+	        //System.out.print("(The block is full: Clear the memory block and append the tuple)" + "\n");
 	        block_reference.clear(); //clear the block
 	        block_reference.appendTuple(tuple); // append the tuple
-	        System.out.print("Write to a new block at the end of the relation" + "\n");
+	        //System.out.print("Write to a new block at the end of the relation" + "\n");
 	        relation_reference.setBlock(relation_reference.getNumOfBlocks(),memory_block_index); //write back to the relation
 	      } else {
-	        System.out.print("(The block is not full: Append it directly)" + "\n");
+	        //System.out.print("(The block is not full: Append it directly)" + "\n");
 	        block_reference.appendTuple(tuple); // append the tuple
-	        System.out.print("Write to the last block of the relation" + "\n");
+	        //System.out.print("Write to the last block of the relation" + "\n");
 	        relation_reference.setBlock(relation_reference.getNumOfBlocks()-1,memory_block_index); //write back to the relation
 	      }
 	    }
