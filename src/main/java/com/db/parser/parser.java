@@ -25,7 +25,7 @@ public class parser {
 		// process the create statement
 		createStatement create = new createStatement();
 		Relation relation_reference = create.parseCreateStatement(mem, "create TABLE tablename(id INT, name str20)", schema_manager);
-		String statementType = getStatementType("CREATE TABLE tablename(name INT, id str20)");
+		//String statementType = getStatementType("CREATE TABLE tablename(name INT, id str20)");
 		
 		//***********************************************************************************************
 		// process the insert statement
@@ -34,12 +34,20 @@ public class parser {
 		insert.parseInsertStatement(relation_reference, mem, "insert into tablename(id, name) VALUES(2, \"Christopher\")");
 
 		SelectStatement select = new SelectStatement();
-		select.parseSelectStatement(mem,schema_manager, "SELECT names, id, name      from tablename" );
+		select.parseSelectStatement(mem,schema_manager, "SELECT id, name      from tablename" );
 		
 		//***********************************************************************************************
 		// process the drop statement
-		dropStatement drop = new dropStatement();
-		drop.parseDeleteStatement("drop table tablename", schema_manager);
+		//dropStatement drop = new dropStatement();
+		//drop.parseDeleteStatement("drop table tablename", schema_manager);
+		
+		//***********************************************************************************************
+		// process the delete statement
+		deleteStatement delete = new deleteStatement();
+		delete.parseDeleteStatement("DELETE FROM tablename", schema_manager, mem);
+		insert.parseInsertStatement(relation_reference, mem, "insert into tablename(id, name) VALUES(1, \"Sukhdeep\")");
+		insert.parseInsertStatement(relation_reference, mem, "insert into tablename(id, name) VALUES(2, \"Christopher\")");
+		select.parseSelectStatement(mem,schema_manager, "SELECT id, name      from tablename" );
 	}
 	
 	// select the operation using regex
@@ -71,84 +79,8 @@ public class parser {
 			dropStatement drop = new dropStatement();
 			drop.parseDeleteStatement(statement, schema_manager);
 		case "delete":	
-			
+			deleteStatement delete = new deleteStatement();
+			delete.parseDeleteStatement("DELETE FROM tablename", schema_manager, mem);
 		}
-	}
-
-	public static String[] lex(String str) {
-		String arr[] = str.split(" "); // can't always split by spaces in case of comma-separated attributes
-		// for (String temp : arr) {
-		// System.out.println(temp);
-		// }
-		return arr;
-	}
-
-	public static Relation parse(String[] arr) {
-		switch (arr[0]) {
-		case "create":
-			String[] createArr = Arrays.copyOfRange(arr, 2, arr.length);
-			Relation ref = create(createArr);
-			return ref;
-			
-		case "insert":
-			// String[] insertArr = Arrays.copyOfRange(arr, 2, arr.length);
-			// insert(insertArr);
-			//Matcher match = parseInsertStatement("insert into tablename(name,    class,   id) VALUES(\"Sukhdeep\", null, 1)");
-			//createTuple(ref, e, MainMemory mem, String[] attributeNames, String[] attributeValues
-			return null;			
-		}
-		return null;
-	}
-	
-	public static Relation create(String[] arr) {
-		System.out.println("create called with array: ");
-		for (String str : arr)
-			System.out.println(str);
-		String relation_name = arr[0];
-		ArrayList<String> field_names = new ArrayList<String>();
-		ArrayList<FieldType> field_types = new ArrayList<FieldType>();
-		if (arr[1].equals("(")) {
-			String[] attributeTypeListArr = Arrays.copyOfRange(arr, 2, arr.length - 1);
-			attributeTypeList(attributeTypeListArr, field_names, field_types);
-		}
-		Relation relation_ref = createTable(relation_name, field_names, field_types);
-		return relation_ref;
-	}
-	
-	public static void attributeTypeList(String[] arr, ArrayList<String> field_names,
-			ArrayList<FieldType> field_types) {
-		if (arr.length > 2) {// there are more attributes
-			parseFirstFieldNameAndFieldType(arr, field_names, field_types);
-			// remove first 3 elements of array and recurse
-			String[] attributeTypeListArr = Arrays.copyOfRange(arr, 3, arr.length);
-			attributeTypeList(attributeTypeListArr, field_names, field_types);
-		} else {// last attribute
-			parseFirstFieldNameAndFieldType(arr, field_names, field_types);
-		}
-	}
-
-	private static void parseFirstFieldNameAndFieldType(String[] arr, ArrayList<String> field_names,
-			ArrayList<FieldType> field_types) {
-		field_names.add(arr[0]);
-		if (arr[1].equals("STR20"))
-			field_types.add(FieldType.STR20);
-		else if (arr[1].equals("INT"))
-			field_types.add(FieldType.INT);
-	}
-
-	public static Relation createTable(String relation_name, ArrayList<String> field_names,
-			ArrayList<FieldType> field_types) {
-		System.out.print("In createTable");
-		Schema schema = new Schema(field_names, field_types);
-
-		Relation relation_reference = schema_manager.createRelation(relation_name, schema);
-
-		// Print the information about the Relation
-		System.out.print("The table has name " + relation_reference.getRelationName() + "\n");
-		System.out.print("The table has schema:" + "\n");
-		System.out.print(relation_reference.getSchema() + "\n");
-		System.out.print("The table currently have " + relation_reference.getNumOfBlocks() + " blocks" + "\n");
-		System.out.print("The table currently have " + relation_reference.getNumOfTuples() + " tuples" + "\n" + "\n");
-		return relation_reference;
 	}
 }

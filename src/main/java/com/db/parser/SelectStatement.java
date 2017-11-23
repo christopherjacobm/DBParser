@@ -21,7 +21,7 @@ public class SelectStatement {
 
         // if the string is matched
         if (match.find()) {
-            System.out.println("\n Select parse values are " + "\n" + match.group(1) + "\n" + match.group(2) + "\n" + match.group(3) + "\n" + match.group(4));
+            //System.out.println("\n Select parse values are " + "\n" + match.group(1) + "\n" + match.group(2) + "\n" + match.group(3) + "\n" + match.group(4));
 
             boolean distinct=false;
             boolean star=false;

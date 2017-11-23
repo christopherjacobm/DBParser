@@ -25,7 +25,7 @@ public class createStatement {
 
 		// if the string is matched
 		if (match.find()) {
-			System.out.println("value is " + match.group(1) + " " + match.group(2) );
+			//System.out.println("value is " + match.group(1) + " " + match.group(2) );
 			String relation_name = match.group(1).trim();
 			
 			// list for the field types
@@ -41,7 +41,7 @@ public class createStatement {
 			// create a tuple with given values
 			Relation relation_reference = createTable(relation_name, schema_manager, field_names, field_types);
 			
-			printRelation(relation_reference);
+			//printRelation(relation_reference);
 			
 			return relation_reference;
 		}	
@@ -61,7 +61,7 @@ public class createStatement {
 		for (int i = 0; i < arr.length; i++) {
 			arr[i] = arr[i].trim();
 			names = arr[i].split(" ");
-			System.out.println(Arrays.toString(names));
+			//System.out.println(Arrays.toString(names));
 			field_names.add(names[0].trim());
 			
 			if (names[1].trim().equals("str20")) {
@@ -70,20 +70,22 @@ public class createStatement {
 				field_types.add(FieldType.INT);			
 			}
 		}
-		for (String strin : field_names)
-			System.out.println(strin);
-		System.out.println(field_names.size());
-		System.out.println(field_types.size());
-		System.out.println(Arrays.toString(arr));
+		//for (String strin : field_names){
+			//System.out.println(strin);
+	    //}
+		//System.out.println(field_names.size());
+		//System.out.println(field_types.size());
+		//System.out.println(Arrays.toString(arr));
 		return field_names;
 	}	
 		
 	// create a relation
 	public static Relation createTable(String relation_name, SchemaManager schema_manager, ArrayList<String> field_names,
 			ArrayList<FieldType> field_types) {
-		System.out.println("In createTable");
-		for (FieldType strin : field_types)
-			System.out.println("values of field types in create table:" + strin);
+		//System.out.println("In createTable");
+		//for (FieldType strin : field_types){
+			//System.out.println("values of field types in create table:" + strin);
+		//}
 		// create a schema with given field names and field types
 		Schema schema = new Schema(field_names, field_types);
 
