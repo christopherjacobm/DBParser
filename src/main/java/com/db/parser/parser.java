@@ -35,7 +35,7 @@ public class parser {
 		//***********************************************************************************************
 		// process the drop statement
 		dropStatement drop = new dropStatement();
-		drop.parseDeleteStatement("drop table tablename");
+		drop.parseDeleteStatement("drop table tablename", schema_manager);
 	}
 	
 	// select the operation using regex
@@ -65,7 +65,7 @@ public class parser {
 			
 		case "drop":
 			dropStatement drop = new dropStatement();
-			drop.parseDeleteStatement(statement);
+			drop.parseDeleteStatement(statement, schema_manager);
 		case "delete":	
 			
 		}

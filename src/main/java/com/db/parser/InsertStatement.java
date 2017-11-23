@@ -84,24 +84,9 @@ public class InsertStatement {
 				}
 			}
 		}
-				
-		// Set up a block in the memory and get a pointer to that empty memory Block
-		Random rand = new Random();
-		System.out.print("Getting a memory block " + "\n");
-		// access to a random memory block
-		int n = rand.nextInt(10) + 1;
-		Block block_reference = mem.getBlock(n);
-
-		// grab an empty memory block
-		while (!block_reference.isEmpty()) {
-			block_reference = mem.getBlock(rand.nextInt(10) + 1);
-		}
-
-		// add a tuple to the memory block
-		block_reference.appendTuple(tuple);
 		
 		// append the tuple to the end of the given relation using memory block n as output buffer
-	    appendTupleToRelation(relation_reference,mem,n,tuple);
+	    appendTupleToRelation(relation_reference,mem,0,tuple);
 		
 		// print the added tuple
 		printTuple(tuple);
