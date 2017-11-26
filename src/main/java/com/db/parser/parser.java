@@ -48,6 +48,47 @@ public class parser {
 		insert.parseInsertStatement(relation_reference, mem, "insert into tablename(id, name) VALUES(1, \"Sukhdeep\")");
 		insert.parseInsertStatement(relation_reference, mem, "insert into tablename(id, name) VALUES(2, \"Christopher\")");
 		select.parseSelectStatement(mem,schema_manager, "SELECT id, name      from tablename" );
+
+
+		ArrayList<String> inputList = new ArrayList<>();
+		/*inputList.add("1");
+		inputList.add("+");
+		inputList.add("2");
+		inputList.add("*");
+		inputList.add("4");
+		inputList.add("/");
+		inputList.add("5");
+		inputList.add("-");
+		inputList.add("7");
+		inputList.add("+");
+		inputList.add("3");
+		inputList.add("/");
+		inputList.add("6");*/
+
+		inputList.add("name");
+		inputList.add("=");
+		inputList.add("\"chris\"");
+		inputList.add("OR");
+		inputList.add("age");
+		inputList.add("*");
+		inputList.add("weight");
+		inputList.add("=");
+		inputList.add("100");
+		inputList.add("AND");
+		inputList.add("marks");
+		inputList.add("*");
+		inputList.add("3");
+		inputList.add(">");
+		inputList.add("150");
+
+		ArrayList<String> output;
+		whereClause wc = new whereClause();
+		output = wc.inToPost(inputList);
+		System.out.println("Postfix is " + output + '\n');
+
+		//String str = "(\"hello\"  +  \"there\")";
+		//System.out.println("Input is " + str);
+		//wc.tokenizeWhere(str);
 	}
 	
 	// select the operation using regex
