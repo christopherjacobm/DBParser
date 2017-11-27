@@ -48,6 +48,14 @@ public class parser {
 		insert.parseInsertStatement(relation_reference, mem, "insert into tablename(id, name) VALUES(1, \"Sukhdeep\")");
 		insert.parseInsertStatement(relation_reference, mem, "insert into tablename(id, name) VALUES(2, \"Christopher\")");
 		select.parseSelectStatement(mem,schema_manager, "SELECT id, name      from tablename" );
+
+		//testing whereClause
+		ArrayList<String> output;
+		whereClause wc = new whereClause();
+		String whr = "SELECT DISTINCT course.grade, course2.grade FROM course, course2 WHERE course.sid = 7 AND exam > course2.exam OR grade = \"A\" AND 7+3 = ( A + B )";
+		ArrayList<String> tmp = wc.tokenizeWhere(whr);
+		output = wc.inToPost(tmp);
+		System.out.println("postfix is: " + output + '\n');
 	}
 	
 	// select the operation using regex
