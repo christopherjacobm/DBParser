@@ -9,119 +9,115 @@ public class whereClause {
 
 
     public ArrayList<String> tokenizeWhere(String input){
-        String term = "\\s*((?:[a-z][a-z0-9]*)|(?:\"[^\"]*\")|(?:[0-9]*))\\s*";
-        //String expression = "\\s*"+"("+term+")|("+term+"\\+"+term+")\\s*";
-        String expression = "\\("+term+"\\+"+term+"\\) ||  ";
-        String regexValue = "^"+expression+"$";
+        ArrayList<String> tokens = new ArrayList<>();
+        String pattern = "\\s*(?:\\(?\\s*(?:(\\\"?[\\w\\.]+\\\"?)(?:\\s*(\\+|\\*|\\-)\\s*(\\\"?[\\w\\.]+\\\"?)\\s*)*)\\)?\\s*)(=|<|>)\\s*(?:\\(?\\s*(?:(\\\"?[\\w\\.]+\\\"?)(?:\\s*(\\+|\\*|\\-)\\s*(\\\"?[\\w\\.]+\\\"?)\\s*)*)\\)?)(?:\\s+(and|or)\\s+)?";
 
-        Pattern regex = Pattern.compile(regexValue, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
-        Matcher match = regex.matcher(input);
+        Pattern r = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
+        Matcher m = r.matcher(input);
 
-        if (match.find()) {
-            System.out.println("groupcount: "+match.groupCount());
-            for(int i=0;i<match.groupCount();i++) {
-                System.out.println(i);
-                System.out.println(match.group(i));
+        while (m.find()) {
+            for (int i=1;i<=+m.groupCount();i++) {
+                //System.out.println(i+" - "+m.group(i));
+                String token = m.group(i);
+                if (token != null)
+                    tokens.add(token);
             }
-
-        } else System.out.println(" no match");
-        return new ArrayList<>();
+        }
+        return tokens ;
     }
-
-
-
 
 //============================================================
 
-        private Stack<String> theStack;
-        //private String output = "";
-        private ArrayList<String> outputList = new ArrayList();
+    private Stack<String> theStack;
+    //private String output = "";
+    private ArrayList<String> outputList = new ArrayList();
 
-        public ArrayList<String> inToPost(ArrayList<String> tokens) {
-            theStack = new Stack<>();
-            for (int j = 0; j < tokens.size(); j++) {
-                String token = tokens.get(j);
-                switch (token) {
-                    case "AND":
+    public ArrayList<String> inToPost(ArrayList<String> tokens) {
+        theStack = new Stack<>();
+        for (int j = 0; j < tokens.size(); j++) {
+            String token = tokens.get(j);
+            switch (token) {
+                case "AND":
+                case "OR":
+                    gotOper(token, 1);
+                    break;
+                case "=":
+                case ">":
+                case "<":
+                    gotOper(token, 2);
+                    break;
+                case "+":
+                case "-":
+                    gotOper(token, 3);
+                    break;
+                case "*":
+                    gotOper(token, 4);
+                    break;
+                case "(":
+                    theStack.push(token);
+                    break;
+                case ")":
+                    gotParen(token);
+                    break;
+                default:
+                    outputList.add(token);
+                    break;
+
+            }
+        }
+        while (!theStack.isEmpty()) {
+            outputList.add(theStack.pop());
+        }
+        return outputList;
+    }
+
+
+    public void gotOper(String opThis, int prec1) {
+        while (!theStack.isEmpty()) {
+            String opTop = theStack.pop();
+            if (opTop == "(") {
+                theStack.push(opTop);
+                break;
+            } else {
+                int prec2;
+
+                switch (opTop) {
                     case "OR":
-                        gotOper(token, 1);
+                        prec2 = 0;
+                        break;
+                    case "AND":
+                        prec2 = 1;
                         break;
                     case "=":
                     case ">":
                     case "<":
-                        gotOper(token, 2);
+                        prec2 = 2;
                         break;
                     case "+":
                     case "-":
-                        gotOper(token, 3);
+                        prec2 = 3;
                         break;
                     case "*":
-                        gotOper(token, 4);
-                        break;
-                    case "(":
-                        theStack.push(token);
-                        break;
-                    case ")":
-                        gotParen(token);
+                        prec2 = 4;
                         break;
                     default:
-                        outputList.add(token);
-                        break;
-
+                        prec2= 0;
                 }
-            }
-            while (!theStack.isEmpty()) {
-                outputList.add(theStack.pop());
-            }
-            return outputList;
-        }
-        public void gotOper(String opThis, int prec1) {
-            while (!theStack.isEmpty()) {
-                String opTop = theStack.pop();
-                if (opTop == "(") {
+                if (prec2 < prec1) {
                     theStack.push(opTop);
                     break;
-                } else {
-                    int prec2;
-
-                    switch (opTop) {
-                        case "OR":
-                            prec2 = 0;
-                            break;
-                        case "AND":
-                            prec2 = 1;
-                            break;
-                        case "=":
-                        case ">":
-                        case "<":
-                            prec2 = 2;
-                            break;
-                        case "+":
-                        case "-":
-                            prec2 = 3;
-                            break;
-                        case "*":
-                            prec2 = 4;
-                            break;
-                        default:
-                            prec2= 0;
-                    }
-                    if (prec2 < prec1) {
-                        theStack.push(opTop);
-                        break;
-                    }
-                    else outputList.add(opTop);
                 }
-            }
-            theStack.push(opThis);
-        }
-        public void gotParen(String str) {
-            while (!theStack.isEmpty()) {
-                String chx = theStack.pop();
-                if (chx == "(")
-                    break;
-                else outputList.add(chx);
+                else outputList.add(opTop);
             }
         }
-
+        theStack.push(opThis);
+    }
+    public void gotParen(String str) {
+        while (!theStack.isEmpty()) {
+            String chx = theStack.pop();
+            if (chx == "(")
+                break;
+            else outputList.add(chx);
+        }
+    }
 }
