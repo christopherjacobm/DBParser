@@ -2,7 +2,6 @@ package com.db.parser;
 
 import com.db.storageManager.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,11 +50,15 @@ public class parser {
 
 		//testing whereClause
 		ArrayList<String> output;
-		whereClause wc = new whereClause();
-		String whr = "SELECT DISTINCT course.grade, course2.grade FROM course, course2 WHERE course.sid = 7 AND exam > course2.exam OR grade = \"A\" AND 7+3 = ( A + B )";
-		ArrayList<String> tmp = wc.tokenizeWhere(whr);
-		output = wc.inToPost(tmp);
-		System.out.println("postfix is: " + output + '\n');
+
+		String whr = "SELECT DISTINCT course.grade, course2.grade FROM course, course2 WHERE name = \"Sukhdeep\" AND id = (0+1) ";
+		whereClause wc = new whereClause(whr);
+		relation_reference.getBlock(0,0);
+		Block b = mem.getBlock(0);
+
+		boolean bool = wc.satisfiedByTuple(b.getTuple(0));
+
+		System.out.println("output is: " + bool + '\n');
 	}
 	
 	// select the operation using regex

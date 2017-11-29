@@ -5,6 +5,7 @@ import com.db.storageManager.*;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import com.db.tree.Node;
 
 public class SelectStatement {
 
@@ -12,7 +13,6 @@ public class SelectStatement {
         // default constructor
     }
 
-    // insert statement
     public void parseSelectStatement(MainMemory mem, SchemaManager schemaManager, String statement) {
         String attributes = "(\\s*[a-z][a-z0-9]*\\s*(?:,\\s*[a-z][a-z0-9]*\\s*)*)";
         String regexValue = "^\\s*select(\\s+distinct)?\\s+(\\*|"+attributes+")\\s+from\\s+"+attributes+"\\s*$";
@@ -102,4 +102,31 @@ public class SelectStatement {
     }
 
 
+    public Node makeTree(String groupOne, String groupTwo, String[] attrs, String groupFour) {
+        Node select = new Node("SELECT");
+        Node distinct = null;
+        Node[] attributes = null;
+        if (groupOne !=null) {
+            distinct = new Node("DISTINCT");
+            select.getChildren().add(distinct);
+        }
+        Node attribute_names = new Node("ATTRIBUTE_NAMES");
+        select.getChildren().add(attribute_names);
+
+        for(int i = 0; i <attrs.length; i++) {
+            attributes[i] = new Node(attrs[i]);
+        }
+
+    		//for(int i = 0; i <attributes.length; i++ ) {
+                //select.getChildren(0).
+            //}
+
+        if (groupTwo !=null) {
+            Node selectStar = new Node("PROJECTION");
+            select.getChildren().add(selectStar);
+        }
+        select.getChildren().add(attribute_names);
+
+        return null;
+    }
 }
