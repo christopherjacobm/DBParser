@@ -21,16 +21,21 @@ public class whereClause {
 
     public whereClause(String query) {
     //todo see if only where part of query should be passed
+        //System.out.println("whereclause constructor");
         ArrayList<String> tokens = tokenize(query);
+        //for (String token:tokens)
+            //System.out.println(token);
         tokensInPostFix = inToPost(tokens);
     }
 
     private ArrayList<String> tokenize(String input){
+        //System.out.println("tokenize");
         ArrayList<String> tokens = new ArrayList<>();
         String pattern = "\\s*(?:\\(?\\s*(?:(\\\"?[\\w\\.]+\\\"?)(?:\\s*(\\+|\\*|\\-)\\s*(\\\"?[\\w\\.]+\\\"?)\\s*)*)\\)?\\s*)(=|<|>)\\s*(?:\\(?\\s*(?:(\\\"?[\\w\\.]+\\\"?)(?:\\s*(\\+|\\*|\\-)\\s*(\\\"?[\\w\\.]+\\\"?)\\s*)*)\\)?)(?:\\s+(and|or)\\s+)?";
 
         Pattern r = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
         Matcher m = r.matcher(input);
+        //System.out.println("input to matcher is: "+input);
 
         while (m.find()) {
             for (int i=1;i<=+m.groupCount();i++) {
@@ -49,9 +54,9 @@ public class whereClause {
         inToPostStack = new Stack<>();
         for (int j = 0; j < tokens.size(); j++) {
             String token = tokens.get(j);
-            switch (token) {
-                case "AND":
-                case "OR":
+            switch (token.toLowerCase()) {
+                case "and":
+                case "or":
                     gotOper(token, 1);
                     break;
                 case "=":
@@ -94,11 +99,11 @@ public class whereClause {
             } else {
                 int prec2;
 
-                switch (opTop) {
-                    case "OR":
+                switch (opTop.toLowerCase()) {
+                    case "or":
                         prec2 = 0;
                         break;
-                    case "AND":
+                    case "and":
                         prec2 = 1;
                         break;
                     case "=":
@@ -148,14 +153,14 @@ public class whereClause {
         int right,left,i;
         boolean boolRight,boolLeft,bool;
         for(String token:tokensInPostFix){
-            switch(token){
-                case "OR":
+            switch(token.toLowerCase()){
+                case "or":
                     boolRight = Boolean.parseBoolean(stack.pop());
                     boolLeft = Boolean.parseBoolean(stack.pop());
                     bool = boolLeft || boolRight;
                     stack.push(Boolean.toString(bool));
                     break;
-                case "AND":
+                case "and":
                     boolRight = Boolean.parseBoolean(stack.pop());
                     boolLeft = Boolean.parseBoolean(stack.pop());
                     bool = boolLeft && boolRight;

@@ -19,10 +19,11 @@ public class InsertStatement {
 	
 	// insert statement
 	public void parseInsertStatement(Relation ref, MainMemory mem, String statement) {
-		String regexValue = "^\\s*insert\\s+into\\s+([a-z][a-z0-9]*)\\s*\\((\\s*[a-z][a-z0-9]*\\s*(?:,\\s*[a-z][a-z0-9]*\\s*)*)\\)\\s+values\\s*\\(\\s*([a-z0-9\"]*\\s*(?:,\\s*[a-z0-9\"]*)*)\\)$";
+		String regexValue = "^\\s*insert\\s+into\\s+([a-z][a-z0-9]*)\\s*\\((\\s*[a-z][a-z0-9]*\\s*(?:,\\s*[a-z][a-z0-9]*\\s*)*)\\)\\s+values\\s*\\(\\s*((NULL|\"[^\"]*\"|[0-9]+)\\s*(?:,\\s*(NULL|\"[^\"]*\"|[0-9]+)\\s*)*)\\)$";
 		Pattern regex = Pattern.compile(regexValue, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 		Matcher match = regex.matcher(statement);
 
+		System.out.println("parse insert");
 		// if the string is matched
 		if (match.find()) {
 			//System.out.println("value is " + match.group(1) + " " + match.group(2) + " " + match.group(3));
@@ -31,7 +32,9 @@ public class InsertStatement {
 			
 			// create a tuple with given values
 			createTuple(ref, mem, attributeNames, attributeValues);
-		}	
+		}else{
+			System.out.println("parseInsertStatement: no match!");
+		}
 	}
 	
 	public String[] trimAndSplitByComma(String str) {
@@ -96,7 +99,7 @@ public class InsertStatement {
 	}
 	
 	// Print the information about the tuple
-	private void printTuple(Tuple tuple) {
+	private static void printTuple(Tuple tuple) {
 		System.out.print("Created a tuple " + tuple + " of ExampleTable3 through the relation" + "\n");
 		System.out.print("The tuple is invalid? " + (tuple.isNull() ? "TRUE" : "FALSE") + "\n");
 		Schema tuple_schema = tuple.getSchema();
@@ -117,6 +120,8 @@ public class InsertStatement {
 	// An example procedure of appending a tuple to the end of a relation
 	  // using memory block "memory_block_index" as output buffer
 	  private static void appendTupleToRelation(Relation relation_reference, MainMemory mem, int memory_block_index, Tuple tuple) {
+		//printTuple(tuple);
+
 	    Block block_reference;
 	    if (relation_reference.getNumOfBlocks()==0) {
 	      //System.out.print("The relation is empty" + "\n");
