@@ -12,28 +12,28 @@ public class parser {
 		MainMemory mem = new MainMemory();
 		Disk disk = new Disk();
 		schema_manager = new SchemaManager(mem, disk);
-
-		// String[] tokens= lex("create TABLE course ( sid INT , homework INT , project
-		// INT , exam INT , grade STR20 )");
-		//String[] tokens = lex("create TABLE t1 ( id INT , name STR20 )");
 		
 		//Relation tableName = parse(tokens);
-		
 		
 		//***********************************************************************************************
 		// process the create statement
 		createStatement create = new createStatement();
-		Relation relation_reference = create.parseCreateStatement(mem, "create TABLE tablename(id INT, name str20)", schema_manager);
-		//String statementType = getStatementType("CREATE TABLE tablename(name INT, id str20)");
-		
+		Relation relation_reference = create.parseCreateStatement(mem, "CREATE TABLE students (id INT, name STR20, age INT, marks INT, height INT, surname STR20, college STR20, address STR20)", schema_manager);
+		//Relation relation_reference = create.parseCreateStatement(mem, "create TABLE students(id INT, name STR20)", schema_manager);
+
+		double time = disk.getDiskTimer();
+		long ios = disk.getDiskIOs();
 		//***********************************************************************************************
 		// process the insert statement
 		InsertStatement insert = new InsertStatement();
-		insert.parseInsertStatement(relation_reference, mem, "insert into tablename(id, name) VALUES(1, \"Sukhdeep\")");
-		insert.parseInsertStatement(relation_reference, mem, "insert into tablename(id, name) VALUES(2, \"Christopher\")");
+		insert.parseInsertStatement(relation_reference, mem, "INSERT INTO students (id,name,age,marks,height,surname,college,address) VALUES(1,\"Sarah\",30,100,163,\"Parker\",\"TAMU\",\"Cherry Street\")");
+		insert.parseInsertStatement(relation_reference, mem, "INSERT INTO  students (id,name,age,marks,height,surname,college,address) VALUES(2, \"Chris\", 40, 100, 165,\"Evans\",\"TAMU\",\"Stack\" )");
 
-		SelectStatement select = new SelectStatement();
-		select.parseSelectStatement(mem,schema_manager, "SELECT id, name      from tablename" );
+		System.out.printf("Time: %.2f ms",(disk.getDiskTimer() - time));
+		System.out.println("\nIO's: "+(disk.getDiskIOs() - ios));
+
+		//SelectStatement select = new SelectStatement();
+		//select.parseSelectStatement(mem,schema_manager, "SELECT id, name      from tablename" );
 		
 		//***********************************************************************************************
 		// process the drop statement
@@ -41,24 +41,13 @@ public class parser {
 		//drop.parseDeleteStatement("drop table tablename", schema_manager);
 		
 		//***********************************************************************************************
-		// process the delete statement
-		deleteStatement delete = new deleteStatement();
-		delete.parseDeleteStatement("DELETE FROM tablename", schema_manager, mem);
-		insert.parseInsertStatement(relation_reference, mem, "insert into tablename(id, name) VALUES(1, \"Sukhdeep\")");
-		insert.parseInsertStatement(relation_reference, mem, "insert into tablename(id, name) VALUES(2, \"Christopher\")");
-		select.parseSelectStatement(mem,schema_manager, "SELECT id, name      from tablename" );
 
-		//testing whereClause
-		ArrayList<String> output;
+		String inputQuery = "SELECT id,name FROM students WHERE name = \"Chris\" AND id = 2 AND college = \"TAMU\" AND age*2=80 ";
+		executeStatement(getStatementType(inputQuery),inputQuery,mem);
 
-		String whr = "SELECT DISTINCT course.grade, course2.grade FROM course, course2 WHERE name = \"Sukhdeep\" AND id = (0+1) ";
-		whereClause wc = new whereClause(whr);
-		relation_reference.getBlock(0,0);
-		Block b = mem.getBlock(0);
+		System.out.printf("Time: %.2f ms",(disk.getDiskTimer() - time));
+		System.out.println("\nIO's: "+(disk.getDiskIOs() - ios));
 
-		boolean bool = wc.satisfiedByTuple(b.getTuple(0));
-
-		System.out.println("output is: " + bool + '\n');
 	}
 	
 	// select the operation using regex
@@ -77,21 +66,22 @@ public class parser {
 	}
 	
 	public static void executeStatement(String statementType, String statement, MainMemory mem) {
-		switch (statementType) {
+		switch (statementType.toLowerCase()) {
 		case "create":
 			createStatement create = new createStatement();
-			create.parseCreateStatement(mem, "create TABLE tablename(name INT, id str20)", schema_manager);
+			create.parseCreateStatement(mem, statement, schema_manager);
 		case "insert":
 			InsertStatement insert = new InsertStatement();
-			//insert.parseInsertStatement(relation_reference, mem, "insert into tablename(id, name) VALUES(1, \"Sukhdeep\")");		
+			//insert.parseInsertStatement(relation_reference, mem, statement);
 		case "select":
-			
+			SelectStatement select = new SelectStatement();
+			select.parseSelectStatement(mem,schema_manager,statement);
 		case "drop":
 			dropStatement drop = new dropStatement();
 			drop.parseDeleteStatement(statement, schema_manager);
 		case "delete":	
 			deleteStatement delete = new deleteStatement();
-			delete.parseDeleteStatement("DELETE FROM tablename", schema_manager, mem);
+			delete.parseDeleteStatement(statement, schema_manager, mem);
 		}
 	}
 }

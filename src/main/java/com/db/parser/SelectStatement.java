@@ -15,7 +15,7 @@ public class SelectStatement {
 
     public void parseSelectStatement(MainMemory mem, SchemaManager schemaManager, String statement) {
         String attributes = "(\\s*[a-z][a-z0-9]*\\s*(?:,\\s*[a-z][a-z0-9]*\\s*)*)";
-        String regexValue = "^\\s*select(\\s+distinct)?\\s+(\\*|"+attributes+")\\s+from\\s+"+attributes+"\\s*$";
+        String regexValue = "^\\s*select(\\s+distinct)?\\s+(\\*|"+attributes+")\\s+from\\s+"+attributes+"\\s*(where)?(.*)?$";
         Pattern regex = Pattern.compile(regexValue, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
         Matcher match = regex.matcher(statement);
 
@@ -25,6 +25,8 @@ public class SelectStatement {
 
             boolean distinct=false;
             boolean star=false;
+            boolean where=false;
+            whereClause wc=null;
             String[] attrs = new String[10];
 
             if (match.group(1)!=null)
@@ -40,25 +42,28 @@ public class SelectStatement {
             String[] tables = Helper.trimAndSplitByComma(match.group(4));
             //System.out.println("tables: "+tables[0]);
 
+            //System.out.println("groupcount: "+match.groupCount());
+            //System.out.println("group 5: "+match.group(5));
+            //System.out.println("group 6: "+match.group(6));
+
+            if (match.group(5)!=null){//where exists
+                where=true;
+                wc = new whereClause(match.group(6));
+            }
+
+            //System.out.println("output is: " + bool + '\n');
+
             //=======================================================
 
             System.out.println();
             System.out.println("========================================");
 
-            for (int i=0;i<tables.length;i++){
-
-                Relation r = schemaManager.getRelation(tables[i]);
+                Relation r = schemaManager.getRelation(tables[0]); //todo-handle cases with more tables
                 Schema schema = r.getSchema();
-                int numBlocks = r.getNumOfBlocks();
-                //int numTuples = r.getNumOfTuples();
+                int numBlocksInRelation = r.getNumOfBlocks();
 
-                r.getBlocks(0,0,numBlocks); //TODO handle cases where relation>10 blocks
-                Block b = mem.getBlock(0);
-                ArrayList<Tuple> tuples= b.getTuples();
+                //printing the column titles
                 ArrayList<String> field_names=schema.getFieldNames();
-
-
-
                 if (star) {//for select *
                     for (String fName : field_names) {
                         System.out.print(fName + " ");
@@ -73,36 +78,55 @@ public class SelectStatement {
 
                 System.out.println("----------------------------------------");
 
-                Field f;
-                for(Tuple t  : tuples){
+                //todo distinct, order by
+                //todo case sensitive everywhere in parsing!
+                int blocksLeft = numBlocksInRelation;
+                //int relationBlockIndex;
+                int memSize = mem.getMemorySize();
+                int numBlocksToRead;
 
-                    if (star) {//for select *
-                        int numFields = t.getNumOfFields();
-                        for (int j = 0; j < numFields; j++) {
-                            f = t.getField(j);
-                            System.out.print(f.toString() + " ");
+                //System.out.println("blocksLeft: "+blocksLeft);
+
+                    while (blocksLeft > 0) {
+                        //System.out.println("in loop, blocksLeft: "+blocksLeft);
+                        if(blocksLeft>memSize)numBlocksToRead = memSize;
+                        else numBlocksToRead = blocksLeft;
+                        r.getBlocks(numBlocksInRelation-blocksLeft, 0, numBlocksToRead);
+                        blocksLeft-=numBlocksToRead;
+
+                        ArrayList<Tuple> tuples = mem.getTuples(0,numBlocksToRead);
+
+                        Field f;
+                        for (Tuple t : tuples) {
+                            if (where && wc.satisfiedByTuple(t)) {//if the where condition is true for this tuple, print it
+                                if (star) {//for select *
+                                    int numFields = t.getNumOfFields();
+                                    for (int j = 0; j < numFields; j++) {
+                                        f = t.getField(j);
+                                        System.out.print(f.toString() + " ");
+                                    }
+                                    System.out.println("");
+                                } else {//for select a,b
+                                    for (String attr : attrs) {
+                                        int j = schema.getFieldOffset(attr);
+                                        f = t.getField(j);
+                                        System.out.print(f.toString() + " ");
+                                    }
+                                    System.out.println("");
+                                }
+                            }
                         }
-                        System.out.println("");
-                    } else {//for select a,b
-                        for (String attr : attrs) {
-                            int j = schema.getFieldOffset(attr);
-                            f = t.getField(j);
-                            System.out.print(f.toString() + " ");
-                        }
-                        System.out.println("");
+
                     }
-                }
-            }
 
-            System.out.println("========================================");
-            System.out.println();
-
+                    System.out.println("========================================");
+                    System.out.println();
         }
         else System.out.println("no match");
     }
 
 
-    public Node makeTree(String groupOne, String groupTwo, String[] attrs, String groupFour) {
+    /*public Node makeTree(String groupOne, String groupTwo, String[] attrs, String groupFour) {
         Node select = new Node("SELECT");
         Node distinct = null;
         Node[] attributes = null;
@@ -129,4 +153,5 @@ public class SelectStatement {
 
         return null;
     }
+    */
 }
