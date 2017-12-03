@@ -48,11 +48,17 @@ public class NaturalJoin {
 			result = twoPassJoin.twoPassSortBasedNaturalJoin(relationOne, relationTwo, joinAttribute, schema_manager, mem);
 		}
 		
-		// print the result		
-		System.out.println(tableOne.getSchema().fieldNamesToString());      // TO DO : change the tableOne -------> final relation in the list
-		for(int i = 0; i< result.size(); i++) {
-			System.out.println(result.get(i));
+		// print the result	
+		if(result != null) {
+			System.out.println(result.get(0).getSchema().fieldNamesToString());      
+			for(int i = 0; i< result.size(); i++) {
+				System.out.println(result.get(i));
+			}
 		}
+		else {
+			System.out.println("No match");
+		}
+		
 		return result;
 	}
 }
