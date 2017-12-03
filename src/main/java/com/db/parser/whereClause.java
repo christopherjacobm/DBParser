@@ -20,7 +20,6 @@ public class whereClause {
     }
 
     public whereClause(String query) {
-    //todo see if only where part of query should be passed
         //System.out.println("whereclause constructor");
         ArrayList<String> tokens = tokenize(query);
         //for (String token:tokens)

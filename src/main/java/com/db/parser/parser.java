@@ -14,7 +14,7 @@ public class parser {
 		schema_manager = new SchemaManager(mem, disk);
 		
 		//Relation tableName = parse(tokens);
-		
+
 		//***********************************************************************************************
 		// process the create statement
 		createStatement create = new createStatement();
@@ -42,8 +42,12 @@ public class parser {
 		
 		//***********************************************************************************************
 
-		String inputQuery = "SELECT id,name FROM students WHERE name = \"Chris\" AND id = 2 AND college = \"TAMU\" AND age*2=80 ";
+		//String inputQuery = "SELECT id,name FROM students WHERE name = \"Chris\" AND id = 2 AND college = \"TAMU\" AND age*2=80 ";
+		String inputQuery = "SELECT DISTINCT id,college FROM students ORDER BY college ";
 		executeStatement(getStatementType(inputQuery),inputQuery,mem);
+
+		String inputQuery2 = "SELECT * FROM studentstemp";
+		executeStatement(getStatementType(inputQuery),inputQuery2,mem);
 
 		System.out.printf("Time: %.2f ms",(disk.getDiskTimer() - time));
 		System.out.println("\nIO's: "+(disk.getDiskIOs() - ios));

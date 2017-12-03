@@ -1,10 +1,11 @@
 package com.db.parser;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Helper {
 
-    public static String[] trimAndSplitByComma(String str) {
+    public static ArrayList<String> trimAndSplitByComma(String str) {
 
         // remove all the spaces before and after the given string
         String trimmed = str.trim();
@@ -18,6 +19,6 @@ public class Helper {
 
         }
         //System.out.println("trimAndSplitByComma: "+Arrays.toString(arr));
-        return arr;
+        return new ArrayList(Arrays.asList(arr));
     }
 }
