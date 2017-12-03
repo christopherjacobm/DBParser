@@ -98,7 +98,7 @@ public class SelectStatement {
 
                         Field f;
                         for (Tuple t : tuples) {
-                            if (where && wc.satisfiedByTuple(t)) {//if the where condition is true for this tuple, print it
+                            if ((!where) || (where && wc.satisfiedByTuple(t))) {//if the where condition is true for this tuple, print it
                                 if (star) {//for select *
                                     int numFields = t.getNumOfFields();
                                     for (int j = 0; j < numFields; j++) {
