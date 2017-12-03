@@ -39,14 +39,6 @@ public class TestTwoPassNaturalJoin {
 		
 		SelectStatement select = new SelectStatement();
 		select.parseSelectStatement(mem,schema_manager, "SELECT * from tablename" );
-		
-		
-		TwoPassSortBasedNaturalJoin a = new TwoPassSortBasedNaturalJoin();
-		ArrayList<Integer> sublist = a.getSublist(relation_reference, mem);
-		for(int x : sublist){
-			System.out.println(x);
-		}
-
 	}
 
 }

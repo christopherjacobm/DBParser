@@ -2,10 +2,8 @@ package com.db.operations;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import com.db.storageManager.FieldType;
 import com.db.storageManager.MainMemory;
 import com.db.storageManager.Relation;
-import com.db.storageManager.Schema;
 import com.db.storageManager.SchemaManager;
 import com.db.storageManager.Tuple;
 
@@ -90,7 +88,7 @@ public class TwoPassSortBasedNaturalJoin {
 					ArrayList<Tuple> mathcingTuples_relationTwo = getMatchingTuples(relationTwoTuples, joinAttribute, commonFieldValue_relationTwo);
 					
 					// create a new relation for the output
-					Relation output_relation = createRelation(relationOne, relationTwo, schema_manager);
+					Relation output_relation = CommonHelper.createRelation(relationOne, relationTwo, schema_manager);
 					
 					//joinTuples and return the arraylist of all the resulting tuples
 					result = crossProductTuples(mathcingTuples_relationOne, mathcingTuples_relationTwo, output_relation);
@@ -101,8 +99,8 @@ public class TwoPassSortBasedNaturalJoin {
 			
 				}
 			}else {					// values dont match, then delete the smallest one from the memory
-				if(isStringInt(commonFieldValue_relationOne) && isStringInt(commonFieldValue_relationTwo)) {								//field type is int
-					if(stringToInteger(commonFieldValue_relationOne) - stringToInteger(commonFieldValue_relationOne) > 0) {
+				if(CommonHelper.isStringInt(commonFieldValue_relationOne) && CommonHelper.isStringInt(commonFieldValue_relationTwo)) {								//field type is int
+					if(CommonHelper.stringToInteger(commonFieldValue_relationOne) - CommonHelper.stringToInteger(commonFieldValue_relationOne) > 0) {
 						deleteSmallTuples(relationTwoTuples, commonFieldValue_relationOne, joinAttribute);
 					}
 					else {
@@ -166,61 +164,6 @@ public class TwoPassSortBasedNaturalJoin {
 			sortedBlocks = sortedBlocks + num_blocks;			
 		}
 	}
-	
-	// comapre two tuples based on the field values
-//	class CompareTuples implements Comparator<Tuple>{
-//		String fieldOne_value;
-//		String fieldTwo_value;	
-//		ArrayList<String> sortByAttributes = null;
-//		int[] output;
-//		
-//		public CompareTuples(ArrayList<String> sortByAttributes) {
-//			this.sortByAttributes = sortByAttributes;
-//			this.output = new int[sortByAttributes.size()];
-//		}
-//		@Override
-//		public int compare(Tuple tupleOne, Tuple tupleTwo) {
-//			for(int i = 0; i < sortByAttributes.size(); i++) {
-//				fieldOne_value = tupleOne.getField(sortByAttributes.get(i)).toString();		// get field value from first tuple
-//				fieldTwo_value = tupleTwo.getField(sortByAttributes.get(i)).toString();		// get field value from second tuple
-//				// check if the values are integer
-//				if(isStringInt(fieldOne_value) && isStringInt(fieldTwo_value)) {
-//					output[i] = stringToInteger(fieldOne_value) - stringToInteger(fieldTwo_value);
-//				}else {
-//					output[i] = fieldOne_value.compareTo(fieldTwo_value);
-//				}			
-//			}
-//			// return -1 if tupleOne < tupleTwo
-//			// return 1 if tupleOne > tupleTwo
-//			for(int i = 0; i < output.length; i++) {
-//				if(output[i] < 0) {
-//					return -1;
-//				}else if(output[i] > 0) {	                  
-//					return 1;
-//				}
-//			}
-//			// return 0 when tupleOne = tupleTwo ie tuples have same field values
-//			return 0;
-//		}			
-//	}
-	
-	// return true if the value is int
-	public Boolean isStringInt(String value) {
-		try {
-			Integer.parseInt(value);
-			return true;
-		}
-		catch(NumberFormatException ex){
-			return false;
-		}
-	}
-	
-	// convert a value from string to int
-	public int stringToInteger(String value) {
-		return Integer.parseInt(value);
-		
-	}
-	
 	
 	// get the number starting block number of all the sublists
 	public ArrayList<Integer> getSublist(Relation relation, MainMemory mem){
@@ -352,66 +295,41 @@ public class TwoPassSortBasedNaturalJoin {
 		return matchingTuples;
 	}
 	
-	// join two tuples into one new tuple
-	public Tuple joinTuples(Tuple tupleOne, Tuple tupleTwo, Relation relation) {
-		String setValue = null;
-		Tuple joinedTuple = relation.createTuple();
-		int tuple_one_size = tupleOne.getNumOfFields();
-		int tuple_two_size = tupleTwo.getNumOfFields();
-		int newTuple_size = tuple_one_size + tuple_two_size;
-		for(int i = 0; i < newTuple_size; i++) {
-			if(i < tuple_one_size) {
-				setValue = tupleOne.getField(i).toString();
-			}
-				else {
-					setValue = tupleOne.getField(i - tuple_one_size).toString();
-			}
-
-			if(isStringInt(setValue)) {								// field is of type int
-				joinedTuple.setField(i, stringToInteger(setValue));
-			}
-			else {																			// field is of type string
-				joinedTuple.setField(i, setValue);
-			}
-		}
-		return joinedTuple;
-	}
-	
 	public ArrayList<Tuple> crossProductTuples(ArrayList<Tuple> listOne, ArrayList<Tuple> listTwo, Relation relation){
 		ArrayList<Tuple> result = new ArrayList<Tuple>();
 		for(int i = 0; i < listOne.size(); i++) {
 			for(int j = 0; i < listTwo.size(); i++) {
-				result.add(joinTuples(listOne.get(i), listOne.get(j), relation));
+				result.add(CommonHelper.joinTuples(listOne.get(i), listOne.get(j), relation));
 			}
 		}
 		return result;
 	}
 	
-	public Relation createRelation(Relation relation_one, Relation relation_two, SchemaManager schema_manager) {
-		// field names and field types of relation one
-		ArrayList<String> field_names = relation_one.getSchema().getFieldNames();
-		ArrayList<String> field_names_two = relation_two.getSchema().getFieldNames();
-		
-		// field names and field types of the relation two
-		ArrayList<FieldType> field_types = relation_one.getSchema().getFieldTypes();
-		ArrayList<FieldType> field_types_two = relation_two.getSchema().getFieldTypes();
-		
-		// append all the field names of relation two to relation one field names
-		field_names.addAll(field_names_two);
-
-		// append all the field types of relation two to relation one field types
-		field_types.addAll(field_types_two);
-		
-		Schema schema = new Schema(field_names, field_types);
-		
-		String relation_name = relation_one.getRelationName() + "NaturalJoin" + relation_two.getRelationName();
-		if(schema_manager.relationExists(relation_name)) {
-			schema_manager.deleteRelation(relation_name);
-		}
-
-		Relation relation = schema_manager.createRelation(relation_name, schema);
-		return relation;
-	}
+//	public Relation createRelation(Relation relation_one, Relation relation_two, SchemaManager schema_manager) {
+//		// field names and field types of relation one
+//		ArrayList<String> field_names = relation_one.getSchema().getFieldNames();
+//		ArrayList<String> field_names_two = relation_two.getSchema().getFieldNames();
+//		
+//		// field names and field types of the relation two
+//		ArrayList<FieldType> field_types = relation_one.getSchema().getFieldTypes();
+//		ArrayList<FieldType> field_types_two = relation_two.getSchema().getFieldTypes();
+//		
+//		// append all the field names of relation two to relation one field names
+//		field_names.addAll(field_names_two);
+//
+//		// append all the field types of relation two to relation one field types
+//		field_types.addAll(field_types_two);
+//		
+//		Schema schema = new Schema(field_names, field_types);
+//		
+//		String relation_name = relation_one.getRelationName() + "NaturalJoin" + relation_two.getRelationName();
+//		if(schema_manager.relationExists(relation_name)) {
+//			schema_manager.deleteRelation(relation_name);
+//		}
+//
+//		Relation relation = schema_manager.createRelation(relation_name, schema);
+//		return relation;
+//	}
 	
 	
 	// delete the tuples from the listing that have the same field value as the matching value
