@@ -10,7 +10,7 @@ import com.db.storageManager.Tuple;
 public class NaturalJoin {
 	
 	
-	public static void naturalJoin(MainMemory mem, SchemaManager schema_manager, String relationOne, String relationTwo) {
+	public static ArrayList<Tuple> naturalJoin(MainMemory mem, SchemaManager schema_manager, String relationOne, String relationTwo, String joinAttribute) {
 		
 		// get relationOne using schemaManager
 		Relation tableOne = schema_manager.getRelation(relationOne);
@@ -40,9 +40,12 @@ public class NaturalJoin {
 		// the smaller table fits in the main memory
 		if(smallerTable.getNumOfBlocks() < mem.getMemorySize()) {
 			// use one pass natural join algorithm
+			OnePassNaturalJoin onePassJoin = new OnePassNaturalJoin();
+			result = OnePassNaturalJoin.naturalJoin(mem, schema_manager, relationOne, relationTwo, joinAttribute);
 		}
 		else { // both tables dont fit in the main memory
-			// use two pass natural join algorithm
+			TwoPassSortBasedNaturalJoin twoPassJoin = new TwoPassSortBasedNaturalJoin();
+			result = twoPassJoin.twoPassSortBasedNaturalJoin(relationOne, relationTwo, joinAttribute, schema_manager, mem);
 		}
 		
 		// print the result		
@@ -50,5 +53,6 @@ public class NaturalJoin {
 		for(int i = 0; i< result.size(); i++) {
 			System.out.println(result.get(i));
 		}
+		return result;
 	}
 }
