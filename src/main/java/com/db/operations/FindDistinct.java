@@ -56,7 +56,7 @@ public class FindDistinct {
 			int sublist_num = smallTuples.indexOf(smallestTuple);
 						
 			// only add to the final output if distinct 
-			if(!areDistinctColumsEqual(fieldNames, smallestTuple, compareTuple)) {
+			if(!areDistinctColumnsEqual(fieldNames, smallestTuple, compareTuple)) {
 				result.add(smallestTuple);
 				compareTuple = smallestTuple;
 			}
@@ -68,12 +68,12 @@ public class FindDistinct {
 	}
 	
 	// check if the tuples are the same
-	public static Boolean areDistinctColumsEqual(ArrayList<String> fieldNames, Tuple tupleOne, Tuple tupleTwo) {
+	public static Boolean areDistinctColumnsEqual(ArrayList<String> fieldNames, Tuple tupleOne, Tuple tupleTwo) {
 		if((tupleOne== null) || (tupleTwo == null)) {
 			return false;
 		}
 		for(String field : fieldNames) {
-			if(!(tupleOne.getField(field).toString().equals(tupleOne.getField(field).toString()))) {
+			if(!(tupleOne.getField(field).toString().equals(tupleTwo.getField(field).toString()))) {
 				return false;
 			}
 		}
@@ -96,21 +96,28 @@ public class FindDistinct {
 				
 		Tuple compareTuple = null;
 		Tuple smallestTuple = null;
+		System.out.println("fieldnames: "+fieldNames);
 		
 		// while the is not empty
 		while(relationTuples.size() != 0) {
 			smallestTuple = Collections.min(relationTuples, new CompareTuplesSort(fieldNames));
+
+			System.out.println("smallestTuple: "+smallestTuple.toString(false));
+			if (compareTuple!=null) System.out.println("compareTuple: "+compareTuple.toString(false));
+
 			
 			// only add to the final output if distinct 
-			if(!areDistinctColumsEqual(fieldNames, smallestTuple, compareTuple)) {
+			if(!areDistinctColumnsEqual(fieldNames, smallestTuple, compareTuple)) {
 				result.add(smallestTuple);
 				compareTuple = smallestTuple;
+				System.out.println("inside if");
 			}
 	
 			// remove the smallest tuple
 			relationTuples.remove(smallestTuple);
 			
 		}
+		System.out.println("In onePassFindDistinct,result: "+result);
 		return result;
 		
 	}

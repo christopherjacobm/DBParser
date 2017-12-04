@@ -1,6 +1,8 @@
 package com.db.parser;
 
+import com.db.operations.Distinct;
 import com.db.operations.NaturalJoin;
+import com.db.operations.Sort;
 import com.db.storageManager.*;
 
 import java.io.BufferedWriter;
@@ -77,6 +79,8 @@ public class SelectStatement {
                         NaturalJoin.naturalJoin(mem, schemaManager, tables.get(0), tables.get(1), naturalJoinColumn );
                     }
                 }
+
+                //get arraylist result=natural join and newly generated relation name. use these to do distinct, order by. probably same for cross join
 
             } else {//SINGLE TABLE CASE
 
@@ -175,6 +179,7 @@ public class SelectStatement {
                     Field f;
                     for (Tuple t : tuples) {
                         if ((!where) || (where && wc.satisfiedByTuple(t))) {//if the where condition is true for this tuple, print it
+
                             if (star) {//for select *
                                 int numFields = t.getNumOfFields();
                                 //System.out.println("in star numfields: "+numFields);
@@ -232,6 +237,52 @@ public class SelectStatement {
                         mem.setBlock(mem.getMemorySize() - 1, lastBlock);
                         tempRel.setBlock(tempRelBlockIndex++, mem.getMemorySize() - 1);
                         lastBlock.clear();
+                    }
+
+                    System.out.println(tempRel.getNumOfTuples());
+
+                    //=========APPLY DISTINCT & ORDER BY==========
+
+                    ArrayList<Tuple> result;
+
+                    if (distinct && !orderBy){
+                        System.out.println("Calling distinct now");
+                        if (star) result = Distinct.distinct(tempRel, mem, tempRel.getSchema().getFieldNames());
+                        else result = Distinct.distinct(tempRel, mem, attrs);
+
+                        // print the distinct tuples;
+                        for(Tuple tuple : result) {
+                            printToConsoleAndFile(tuple.toString(false));
+                            printToConsoleAndFile("\n");
+                        }
+
+                    }
+
+                    if (orderBy && !distinct){
+                        ArrayList<String> sortColumn = new ArrayList<String>();
+                        sortColumn.add(orderByColumnName);
+                        result = Sort.sort(tempRel, mem, sortColumn);
+
+                    for(Tuple tuple : result) {
+                        for (String fName : attrs) {//loop thru attrs
+                            Field f = tuple.getField(fName);
+                            //if (distinct or order) write to temp relation instead of printing
+                            printToConsoleAndFile(f.toString() + " ");
+                        }
+                        printToConsoleAndFile("\n");
+                    }
+                    }
+
+                    if(orderBy && distinct){
+                        ArrayList<String> sortColumn = new ArrayList<String>();
+                        sortColumn.add(orderByColumnName);
+                        result = Sort.sort(tempRel, mem, sortColumn);
+
+                        System.out.println("Calling distinct now");
+                        if (star) result = Distinct.distinct(tempRel, mem, tempRel.getSchema().getFieldNames());
+                        else result = Distinct.distinct(tempRel, mem, attrs);
+
+                        //todo in 1 pass case, give output of one as input to the other. in 2 pass case, make temp relation after one and give to other
                     }
 
                         /*if(tempRel.getNumOfBlocks()<=mem.getMemorySize()){//if the relation that remains fits in memory
