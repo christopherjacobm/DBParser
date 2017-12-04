@@ -34,45 +34,41 @@ public class TwoPassSortBasedNaturalJoin {
 		ArrayList<String> sortBy = new ArrayList<String>();
 		sortBy.add(joinAttribute);
 		
-		this.phaseOne(mem, relationOne, sortBy);
-		this.phaseOne(mem, relationTwo, sortBy);
+		// sort the sublists of each relation
+		CommonHelper.phaseOne(mem, relationOne, sortBy);
+		CommonHelper.phaseOne(mem, relationTwo, sortBy);
 		
 		// clean out the main memory
-		for(int i = 0; i < mem.getMemorySize(); i++) {
-			mem.getBlock(i).clear();
-		}
+		mem = CommonHelper.clearMem(mem);
 		
 		// get the starting blocks number of each sublist as an array
-		ArrayList<Integer> sublistOne = getSublist(relationOne, mem);
-		ArrayList<Integer> sublistTwo = getSublist(relationTwo, mem);
+		ArrayList<Integer> sublistOne = CommonHelper.getSublist(relationOne, mem);
+		ArrayList<Integer> sublistTwo = CommonHelper.getSublist(relationTwo, mem);
 		
 		// number of blocks in the last sublist, in other sublists there are exactly 10 blocks
-		int num_blocks_last_sublist_one = getLastSublistBlocksCount(relationOne, mem);
-		int num_blocks_last_sublist_two = getLastSublistBlocksCount(relationTwo, mem);
+		int num_blocks_last_sublist_one = CommonHelper.getLastSublistBlocksCount(relationOne, mem);
+		int num_blocks_last_sublist_two = CommonHelper.getLastSublistBlocksCount(relationTwo, mem);
 		
-		// read one block from each sublist in each relation into the main memory and store tuples 
-		readBlockFromSublist(sublistOne, relationOne, mem, relationOneTuples, 0);         					// startingIndex = 0, memory blocks empty
-		readBlockFromSublist(sublistTwo, relationTwo, mem, relationTwoTuples, sublistOne.size());		    // startingIndex = sublistOne.size(), one block from each sublist of relation one already exist in the memory
-																															// append the blosks of 2nd relation below the bloacks of the 1st relation in the memory
 		// to store the number of read blocks in each sublist
 		int[] blocksRead_tableOne = new int[sublistOne.size()];
 		int[] blocksRead_tableTwo = new int[sublistTwo.size()];
 		
-		// initialize all the values to be 1 since one block of each sublist has been read into the main memory
-		setInitialValue(blocksRead_tableOne);
-		setInitialValue(blocksRead_tableTwo);
+		// read one block from each sublist in each relation into the main memory and store tuples 
+		relationOneTuples = CommonHelper.readBlockFromSublist(sublistOne, relationOne, mem, relationOneTuples, 0, blocksRead_tableOne);         					// startingIndex = 0, memory blocks empty
+		relationTwoTuples = CommonHelper.readBlockFromSublist(sublistTwo, relationTwo, mem, relationTwoTuples, sublistOne.size(), blocksRead_tableTwo);		    // startingIndex = sublistOne.size(), one block from each sublist of relation one already exist in the memory
+																															// append the blosks of 2nd relation below the bloacks of the 1st relation in the memory
 		
 		// result of natural join of two tables
 		ArrayList<Tuple> result = null;
 		
 		while(isListEmpty(relationOneTuples) && isListEmpty(relationTwoTuples)) {
 			// if the blocks in memory are empty, bring in the next block from disk
-			ifEmptyReadNextBlock(sublistOne, relationOneTuples, relationOne, blocksRead_tableOne, mem, num_blocks_last_sublist_one, 0);
-			ifEmptyReadNextBlock(sublistTwo, relationTwoTuples, relationTwo, blocksRead_tableTwo, mem, num_blocks_last_sublist_two, sublistOne.size());
+			CommonHelper.ifEmptyReadNextBlock(sublistOne, relationOneTuples, relationOne, blocksRead_tableOne, mem, num_blocks_last_sublist_one, 0);
+			CommonHelper.ifEmptyReadNextBlock(sublistTwo, relationTwoTuples, relationTwo, blocksRead_tableTwo, mem, num_blocks_last_sublist_two, sublistOne.size());
 			
 			// find the small tuple in each block in the memory
-			ArrayList<Tuple> smallTuples_relationOne = smallestTuple(sublistOne, relationOneTuples, joinAttribute);
-			ArrayList<Tuple> smallTuples_relationTwo = smallestTuple(sublistTwo, relationTwoTuples, joinAttribute);
+			ArrayList<Tuple> smallTuples_relationOne = CommonHelper.smallestTuple(sublistOne, relationOneTuples, joinAttribute, null);
+			ArrayList<Tuple> smallTuples_relationTwo = CommonHelper.smallestTuple(sublistTwo, relationTwoTuples, joinAttribute, null);
 			
 			// pick the smallest tuple of each relation
 			Tuple smallestTuple_relationOne =  Collections.min(smallTuples_relationOne,  new CompareTuplesMin(joinAttribute));
@@ -120,110 +116,6 @@ public class TwoPassSortBasedNaturalJoin {
 		return result;
 	}
 	
-	
-	public void phaseOne(MainMemory mem, Relation relation, ArrayList<String> sortByAttributes) {
-		
-		// number of blocks being processed at a time
-		int num_blocks = 0;
-		
-		// a variable to keep track of the number of sorted blocks at any time
-		int sortedBlocks = 0;
-		
-		// total number of blocks of the given relation
-		int relationBlocks = relation.getNumOfBlocks();
-		
-		// size of main memory (10)
-		int mem_size = mem.getMemorySize();
-		
-		int temp = relationBlocks - sortedBlocks;
-		
-		// while all the blocks on disk are not sorted
-		while(sortedBlocks != relationBlocks) {
-			if(temp > mem_size) {				// blocks left to be processed dont fit in the main memory
-				num_blocks= mem_size;
-			}
-			else {								// blocks left to be processed fit in the main memory
-				num_blocks = temp;
-			}
-			// read severals blocks from the disk and store in the main memory
-			relation.getBlocks(sortedBlocks, 0, num_blocks);
-			
-			// read all the tuples stored in the main memory starting from block index 0 to num_blocks
-			ArrayList<Tuple> tuples = mem.getTuples(0, num_blocks);
-			
-			// sort the tuples and make them sorted sublists
-			Collections.sort(tuples, new CompareTuplesSort(sortByAttributes));
-			
-			// write sorted sublists to main memory
-			mem.setTuples(0, tuples);
-			
-			// read sorted sublists from the main memory and store on the disk
-			relation.setBlocks(sortedBlocks, 0, num_blocks);
-			
-			// update the number of sorted bloacks in the memory
-			sortedBlocks = sortedBlocks + num_blocks;			
-		}
-	}
-	
-	// get the number starting block number of all the sublists
-	public ArrayList<Integer> getSublist(Relation relation, MainMemory mem){
-		
-		// array to store the starting block number of each sublists
-		ArrayList<Integer> sublist_relation_one = new ArrayList<Integer>(); 
-		
-		// first sublists always start at block 0
-		sublist_relation_one.add(0);
-		
-		// size of a relation
-		int relation_size = relation.getNumOfBlocks();
-		
-		// memory size
-		int mem_size = mem.getMemorySize();
-		return getSubList(sublist_relation_one, relation_size, mem_size);
-	}
-	
-	// helper method to get the block number of different sublists recursively
-	// eg: if relation size 48,  sublist_relation_one = < 0, 10, 20, 30, 40>
-	private ArrayList<Integer> getSubList(ArrayList<Integer> subList , int relation_size, int mem_size) {
-		int value;
-		if(relation_size > mem_size) {
-			value = relation_size / mem_size;
-			relation_size = relation_size - mem_size;
-			getSubList(subList, relation_size, mem_size);
-			subList.add(value * 10);
-		}
-		return subList;
-	}
-	
-	// number of blocks in the last sublist, in other sublists there are exactly 10 blocks
-	public int getLastSublistBlocksCount(Relation relation, MainMemory mem) {
-		int num_blocks = 0;
-		
-		if(relation.getNumOfBlocks() <= mem.getMemorySize()) {
-			num_blocks = relation.getNumOfBlocks();
-		}else {
-			num_blocks = relation.getNumOfBlocks() % 10;
-		}
-		return num_blocks;
-	}
-	
-	public void setInitialValue(int[] array) {
-		// set the initial value 
-		for(int i = 0; i < array.length; i++) {
-			array[i] = 1;
-		}
-	}
-	
-	public void readBlockFromSublist(ArrayList<Integer> sublist, Relation relation, MainMemory mem, ArrayList<ArrayList<Tuple>> relationTuples, int startingIndex) {
-
-		// read one block from each sublist in relation One into the main memory
-		for(int i = 0; i < sublist.size(); i++) {
-			relation.getBlock(sublist.get(i), i + startingIndex);            			// read one block from relation and store it in the main memory at the given index
-			relationTuples.add(mem.getBlock(i+startingIndex).getTuples());			//  read block from main memory stored at the given index
-																					//  store all the tuples in the given block in an array list 
-		}	
-	}
-	
 	// return true if the arraylist of (arralist of tuples )is empty
 	public Boolean isListEmpty(ArrayList<ArrayList<Tuple>> list) {
 		for(ArrayList<Tuple> tuple :list) {
@@ -232,42 +124,6 @@ public class TwoPassSortBasedNaturalJoin {
 			}
 		}
 		return true;
-	}
-	
-	public void ifEmptyReadNextBlock(ArrayList<Integer> sublist, ArrayList<ArrayList<Tuple>> relationTuples, Relation relation, int[] blocksRead, MainMemory mem, int num_blocks_last_sublist, int startingIndex) {
-		int last_element = sublist.size() -1;
-		// if the blocks in memory are empty, bring in the next block from disk
-		for(int i =0 ; i < sublist.size(); i++) {
-			if(relationTuples.get(i).size() == 0) {
-				// not last element and there are more blocks to read from the sublist
-				if(i < last_element && blocksRead[i] < mem.getMemorySize()) {							// if not the last element in the arraylist, that last sublist does not gurantee to have 10 bloacks
-					relation.getBlock(sublist.get(i) + blocksRead[i], i + startingIndex);
-					relationTuples.add(mem.getBlock(i + startingIndex).getTuples());									    // add all the tuples read into memory into the arraylist
-					blocksRead[i]++;       															// increment the number of read blocks of the sublist
-				}
-				else if(i == last_element && blocksRead[i] < num_blocks_last_sublist) {     		// last sublist and all the blocks in sublist have not been read yet
-					relation.getBlock(sublist.get(i) + blocksRead[i], i + startingIndex);
-					relationTuples.add(mem.getBlock(i + startingIndex).getTuples());									    // add all the tuples read into memory into the arraylist
-					blocksRead[i]++; 																// increment the number of read blocks of the sublist
-				}
-			}
-		}
-	}
-	
-	// pick smallest tuple from each block of a relation
-	public ArrayList<Tuple> smallestTuple(ArrayList<Integer> sublist, ArrayList<ArrayList<Tuple>> relationTuples, String fieldName) {
-		// array storing the smallest tuple from each block
-		ArrayList<Tuple> smallestTuples = new ArrayList<Tuple>();
-		for(int i = 0; i < sublist.size(); i++) {
-			if(relationTuples.get(i).size() != 0) {
-				// find the smallest tuple by comparing tuples
-				smallestTuples.add(0,Collections.min(relationTuples.get(i),  new CompareTuplesMin(fieldName)));
-			}
-			else {
-				smallestTuples.addAll(0, null);			// block is empty
-			}
-		}
-		return smallestTuples;
 	}
 	
 	// for a given tuple, return the value of a given field if tuple not null

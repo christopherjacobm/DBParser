@@ -17,12 +17,17 @@ public class CompareTuplesSort implements Comparator<Tuple>{
 	}
 	@Override
 	public int compare(Tuple tupleOne, Tuple tupleTwo) {
+		if(tupleOne == null) {
+			return 1;
+		}else if(tupleTwo == null){
+			return -1;
+		}
 		for(int i = 0; i < sortByAttributes.size(); i++) {
 			fieldOne_value = tupleOne.getField(sortByAttributes.get(i)).toString();		// get field value from first tuple
 			fieldTwo_value = tupleTwo.getField(sortByAttributes.get(i)).toString();		// get field value from second tuple
 			// check if the values are integer
-			if(isStringInt(fieldOne_value) && isStringInt(fieldTwo_value)) {
-				output[i] = stringToInteger(fieldOne_value) - stringToInteger(fieldTwo_value);
+			if(CommonHelper.isStringInt(fieldOne_value) && CommonHelper.isStringInt(fieldTwo_value)) {
+				output[i] = CommonHelper.stringToInteger(fieldOne_value) - CommonHelper.stringToInteger(fieldTwo_value);
 			}else {
 				output[i] = fieldOne_value.compareTo(fieldTwo_value);
 			}			
@@ -39,21 +44,4 @@ public class CompareTuplesSort implements Comparator<Tuple>{
 		// return 0 when tupleOne = tupleTwo ie tuples have same field values
 		return 0;
 	}	
-	
-	// return true if the value is int
-	public Boolean isStringInt(String value) {
-		try {
-			Integer.parseInt(value);
-			return true;
-		}
-		catch(NumberFormatException ex){
-			return false;
-		}
-	}
-	
-	// convert a value from string to int
-	public int stringToInteger(String value) {
-		return Integer.parseInt(value);
-		
-	}
 }
