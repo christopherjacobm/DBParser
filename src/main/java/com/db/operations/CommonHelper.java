@@ -207,7 +207,7 @@ public class CommonHelper {
 		int last_element = sublist.size() -1;
 		// if the blocks in memory are empty, bring in the next block from disk
 		for(int i =0 ; i < sublist.size(); i++) {
-			if(relationTuples.get(i).size() == 0) {
+			if(relationTuples.get(i).isEmpty()) {
 				// not last element and there are more blocks to read from the sublist
 				if(i < last_element && blocksRead[i] < mem.getMemorySize()) {							// if not the last element in the arraylist, that last sublist does not gurantee to have 10 bloacks
 					relation.getBlock(sublist.get(i) + blocksRead[i], i + startingIndex);

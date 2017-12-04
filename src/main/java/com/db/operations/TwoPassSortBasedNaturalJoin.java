@@ -2,6 +2,8 @@ package com.db.operations;
 
 import java.util.ArrayList;
 import java.util.Collections;
+
+import com.db.storageManager.Block;
 import com.db.storageManager.MainMemory;
 import com.db.storageManager.Relation;
 import com.db.storageManager.SchemaManager;
@@ -38,59 +40,58 @@ public class TwoPassSortBasedNaturalJoin {
 		CommonHelper.phaseOne(mem, relationOne, sortBy);
 		CommonHelper.phaseOne(mem, relationTwo, sortBy);
 
-		//System.out.println("Herreeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee6e");
 		// clean out the main memory
 		mem = CommonHelper.clearMem(mem);
-		//System.out.println("Herreeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee7");
+
 		// get the starting blocks number of each sublist as an array
 		ArrayList<Integer> sublistOne = CommonHelper.getSublist(relationOne, mem);
 
 		//System.out.println();
 		ArrayList<Integer> sublistTwo = CommonHelper.getSublist(relationTwo, mem);
 
-
-
-
-		//System.out.println("Herreeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee87");
 		// number of blocks in the last sublist, in other sublists there are exactly 10 blocks
 		int num_blocks_last_sublist_one = CommonHelper.getLastSublistBlocksCount(relationOne, mem);
 		int num_blocks_last_sublist_two = CommonHelper.getLastSublistBlocksCount(relationTwo, mem);
-		//System.out.println("num_blocks_last_sublist_two: " + num_blocks_last_sublist_one);
-		//System.out.println("num_blocks_last_sublist_two : "+ num_blocks_last_sublist_two);
-		//System.out.println("Herreeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee9");
+
 		// to store the number of read blocks in each sublist
 		int[] blocksRead_tableOne = new int[sublistOne.size()];
 		int[] blocksRead_tableTwo = new int[sublistTwo.size()];
-		//System.out.println("Herreeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee10");
+
 		// read one block from each sublist in each relation into the main memory and store tuples 
 		relationOneTuples = CommonHelper.readBlockFromSublist(sublistOne, relationOne, mem, relationOneTuples, 0, blocksRead_tableOne);         					// startingIndex = 0, memory blocks empty
 		relationTwoTuples = CommonHelper.readBlockFromSublist(sublistTwo, relationTwo, mem, relationTwoTuples, sublistOne.size(), blocksRead_tableTwo);		    // startingIndex = sublistOne.size(), one block from each sublist of relation one already exist in the memory
 
-		int temp =0;
-		for(int i = 0; i < relationOneTuples.size(); i++){																																									// append the blosks of 2nd relation below the bloacks of the 1st relation in the memory
-			 temp += relationOneTuples.get(i).size();
-		}
+//		int temp =0;
+//		for(int i = 0; i < relationOneTuples.size(); i++){																																									// append the blosks of 2nd relation below the bloacks of the 1st relation in the memory
+//			 temp += relationOneTuples.get(i).size();
+//		}
+//		
+//		int temp2 =0;
+//		for(int i = 0; i < relationTwoTuples.size(); i++){																																									// append the blosks of 2nd relation below the bloacks of the 1st relation in the memory
+//			 temp2 += relationTwoTuples.get(i).size();
+//		}
+//		System.out.println("temp "+ temp );
+//		System.out.println("temp2 "+ temp2 );
 
 		// result of natural join of two tables
-		ArrayList<Tuple> result = null;
-		while(temp>0) {
+		ArrayList<Tuple> result = new ArrayList<Tuple>();
+		while(!isSublistEmpty(relationOneTuples) && !isSublistEmpty(relationTwoTuples)) {
 
 
 			// if the blocks in memory are empty, bring in the next block from disk
-			CommonHelper.ifEmptyReadNextBlock(sublistOne, relationOneTuples, relationOne, blocksRead_tableOne, mem, num_blocks_last_sublist_one, 0);
-			CommonHelper.ifEmptyReadNextBlock(sublistTwo, relationTwoTuples, relationTwo, blocksRead_tableTwo, mem, num_blocks_last_sublist_two, sublistOne.size());
-			//System.out.println("Herreeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee4");
+//			CommonHelper.ifEmptyReadNextBlock(sublistOne, relationOneTuples, relationOne, blocksRead_tableOne, mem, num_blocks_last_sublist_one, 0);
+//			CommonHelper.ifEmptyReadNextBlock(sublistTwo, relationTwoTuples, relationTwo, blocksRead_tableTwo, mem, num_blocks_last_sublist_two, sublistOne.size());
+
 			// find the small tuple in each block in the memory
 			ArrayList<Tuple> smallTuples_relationOne = CommonHelper.smallestTuple(sublistOne, relationOneTuples, joinAttribute, null);
 			ArrayList<Tuple> smallTuples_relationTwo = CommonHelper.smallestTuple(sublistTwo, relationTwoTuples, joinAttribute, null);
-			//System.out.println("Herreeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee3");
+
 			// pick the smallest tuple of each relation
 			Tuple smallestTuple_relationOne =  Collections.min(smallTuples_relationOne,  new CompareTuplesMin(joinAttribute));
 			Tuple smallestTuple_relationTwo =  Collections.min(smallTuples_relationTwo,  new CompareTuplesMin(joinAttribute));
-			//System.out.println("Herreeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee2e");
+
 			String commonFieldValue_relationOne = getFieldValue(smallestTuple_relationOne, joinAttribute);
 			String commonFieldValue_relationTwo = getFieldValue(smallestTuple_relationTwo, joinAttribute);
-			//System.out.println("Herreeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee2e");
 			
 			if(commonFieldValue_relationOne != null && commonFieldValue_relationTwo != null) {
 				if(commonFieldValue_relationOne.equals(commonFieldValue_relationTwo)) {
@@ -102,38 +103,85 @@ public class TwoPassSortBasedNaturalJoin {
 					Relation output_relation = CommonHelper.createRelation(relationOne, relationTwo, schema_manager, "NaturalJoin");
 					
 					//joinTuples and return the arraylist of all the resulting tuples
-					result = crossProductTuples(mathcingTuples_relationOne, mathcingTuples_relationTwo, output_relation, joinAttribute);
+					crossProductTuples(mathcingTuples_relationOne, mathcingTuples_relationTwo, output_relation, joinAttribute, result);
 					
-					// delete both Relation one small tuples and relation two small tuples
-					deleteSmallTuples(relationOneTuples, commonFieldValue_relationOne, joinAttribute);
-					deleteSmallTuples(relationTwoTuples, commonFieldValue_relationTwo, joinAttribute);
-			
+					
+					
+					Boolean keep_min_one = false;
+					Boolean keep_min_two = false;
+					
+					Block tempBlock;
+					for(int i = 0; i < sublistOne.size(); i++) {
+						tempBlock = mem.getBlock(i);
+						if((getSameTuplesCountSingleSegment(commonFieldValue_relationOne, joinAttribute, relationOneTuples.get(i)) == tempBlock.getNumTuples()) ) {
+							keep_min_two = true;
+							break;
+						}
+					}
+					
+					for(int i = 0; i < sublistTwo.size(); i++) {
+						tempBlock = mem.getBlock(i+sublistOne.size());
+						if((getSameTuplesCountSingleSegment(commonFieldValue_relationTwo, joinAttribute, relationTwoTuples.get(i)) == tempBlock.getNumTuples()) ) {
+							keep_min_one = true;
+							break;
+						}
+					}
+					
+					if(keep_min_one && !keep_min_two) {
+						relationTwoTuples = deleteSmallTuples(relationTwoTuples, commonFieldValue_relationTwo, joinAttribute);
+					}
+					
+					if(!keep_min_one && keep_min_two) {
+						relationOneTuples = deleteSmallTuples(relationOneTuples, commonFieldValue_relationOne, joinAttribute);
+					}
+					
+					if((keep_min_one && keep_min_two) || (!keep_min_one && !keep_min_two)) {
+						// delete both Relation one small tuples and relation two small tuples
+						relationOneTuples = deleteSmallTuples(relationOneTuples, commonFieldValue_relationOne, joinAttribute);
+						relationTwoTuples = deleteSmallTuples(relationTwoTuples, commonFieldValue_relationTwo, joinAttribute);
+					}
+				
 				}
-			}else {					// values dont match, then delete the smallest one from the memory
-				if(CommonHelper.isStringInt(commonFieldValue_relationOne) && CommonHelper.isStringInt(commonFieldValue_relationTwo)) {								//field type is int
-					if(CommonHelper.stringToInteger(commonFieldValue_relationOne) - CommonHelper.stringToInteger(commonFieldValue_relationOne) > 0) {
-						deleteSmallTuples(relationTwoTuples, commonFieldValue_relationOne, joinAttribute);
+				else {					// values dont match, then delete the smallest one from the memory
+					if(CommonHelper.isStringInt(commonFieldValue_relationOne) && CommonHelper.isStringInt(commonFieldValue_relationTwo)) {								//field type is int
+						if(CommonHelper.stringToInteger(commonFieldValue_relationOne) - CommonHelper.stringToInteger(commonFieldValue_relationOne) > 0) {
+							relationTwoTuples = deleteSmallTuples(relationTwoTuples, commonFieldValue_relationTwo, joinAttribute);
+						}
+						else {
+							relationOneTuples = deleteSmallTuples(relationOneTuples, commonFieldValue_relationOne, joinAttribute);
+						}
 					}
 					else {
-						deleteSmallTuples(relationOneTuples, commonFieldValue_relationOne, joinAttribute);
-					}
-				}
-				else {
-					if((commonFieldValue_relationOne.compareTo(commonFieldValue_relationTwo)) > 0) {
-						deleteSmallTuples(relationTwoTuples, commonFieldValue_relationOne, joinAttribute);
-					}
-					else {
-						deleteSmallTuples(relationOneTuples, commonFieldValue_relationOne, joinAttribute);
+						if((commonFieldValue_relationOne.compareTo(commonFieldValue_relationTwo)) > 0) {
+							relationTwoTuples = deleteSmallTuples(relationTwoTuples, commonFieldValue_relationTwo, joinAttribute);
+						}
+						else {
+							relationOneTuples = deleteSmallTuples(relationOneTuples, commonFieldValue_relationOne, joinAttribute);
+						}
 					}
 				}
 			}
-			System.out.println(relationOneTuples.size());
-			System.out.println(relationTwoTuples.size());
-			System.out.println("temp :" + temp);
 
-			for(int i = 0; i < relationOneTuples.size(); i++){																																									// append the blosks of 2nd relation below the bloacks of the 1st relation in the memory
-				temp += relationOneTuples.get(i).size();
-			}
+////			System.out.println(relationOneTuples.size());
+////			System.out.println(relationTwoTuples.size());
+////			System.out.println("temp :" + temp);
+//			temp = 0;
+//			for(int i = 0; i < relationOneTuples.size(); i++){																																									// append the blosks of 2nd relation below the bloacks of the 1st relation in the memory
+//			//	if(relationOneTuples.get(i) != null) {
+//					temp += relationOneTuples.get(i).size();
+//			//	}
+//			}
+//			temp2 =0;
+//			for(int i = 0; i < relationTwoTuples.size(); i++){																																									// append the blosks of 2nd relation below the bloacks of the 1st relation in the memory
+//			//	if(relationOneTuples.get(i) != null) { 
+//					temp2 += relationTwoTuples.get(i).size();
+//			//	}
+//			}
+//			
+//			System.out.println("temp "+ temp );
+//			System.out.println("temp2 "+ temp2 );
+			CommonHelper.ifEmptyReadNextBlock(sublistOne, relationOneTuples, relationOne, blocksRead_tableOne, mem, num_blocks_last_sublist_one, 0);
+			CommonHelper.ifEmptyReadNextBlock(sublistTwo, relationTwoTuples, relationTwo, blocksRead_tableTwo, mem, num_blocks_last_sublist_two, sublistOne.size());
 		}
 		return result;
 	}
@@ -166,7 +214,7 @@ public class TwoPassSortBasedNaturalJoin {
 		for(int i = 0; i < relationtuples.size(); i++) {
 			// loop over each block of tuples
 			for(int j = 0; j < relationtuples.get(i).size(); j++) {
-				if(relationtuples.get(i).get(j).getField(joinAttribute).toString().equals("Chris")) {
+				if(relationtuples.get(i).get(j).getField(joinAttribute).toString().equals(macthingValue)) {
 					matchingTuples.add(relationtuples.get(i).get(j));
 				}
 			}
@@ -175,14 +223,13 @@ public class TwoPassSortBasedNaturalJoin {
 		return matchingTuples;
 	}
 	
-	public ArrayList<Tuple> crossProductTuples(ArrayList<Tuple> listOne, ArrayList<Tuple> listTwo, Relation relation, String joinAttribute){
-		ArrayList<Tuple> result = new ArrayList<Tuple>();
+	public void crossProductTuples(ArrayList<Tuple> listOne, ArrayList<Tuple> listTwo, Relation relation, String joinAttribute, ArrayList<Tuple> result){
 		for(int i = 0; i < listOne.size(); i++) {
-			for(int j = 0; i < listTwo.size(); i++) {
-				result.add(CommonHelper.joinTuples(listOne.get(i), listOne.get(j), relation, joinAttribute));
+			for(int j = 0; j < listTwo.size(); j++) {
+				result.add(CommonHelper.joinTuples(listOne.get(i), listTwo.get(j), relation, joinAttribute));
 			}
 		}
-		return result;
+
 	}
 	
 //	public Relation createRelation(Relation relation_one, Relation relation_two, SchemaManager schema_manager) {
@@ -213,19 +260,50 @@ public class TwoPassSortBasedNaturalJoin {
 	
 	
 	// delete the tuples from the listing that have the same field value as the matching value
-	public void deleteSmallTuples(ArrayList<ArrayList<Tuple>> relationTuples, String matching_value, String field_name) {
-		System.out.print("matching_value : " + matching_value);
-		System.out.print("field_name : " + field_name);
+	public ArrayList<ArrayList<Tuple>> deleteSmallTuples(ArrayList<ArrayList<Tuple>> relationTuples, String matching_value, String field_name) {
+//		System.out.print("matching_value : " + matching_value);
+//		System.out.print("field_name : " + field_name);
 		for(int i = 0; i < relationTuples.size(); i++) {
 			for(int j = 0; j < relationTuples.get(i).size(); j++) {
 				if(relationTuples.get(i).get(j).getField(field_name).toString().equals(matching_value)) {
-					System.out.print("inside the if statement, matching_value : " + matching_value);
-					System.out.print("inside the if statement, field_name : " + field_name);
 					relationTuples.get(i).remove(relationTuples.get(i).get(j));
 				}
 			}
 		}
-		
+		return relationTuples;
+	}
+	
+	public static Boolean isSublistEmpty(ArrayList<ArrayList<Tuple>> relationTuples) {
+		for(ArrayList<Tuple> list : relationTuples) {
+			if(list.size() != 0) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	// get the same value tuples in a single segment
+	public static int getSameTuplesCountSingleSegment(String matchingValue, String fieldName, ArrayList<Tuple> relationTuples) {
+		int count = 0;
+		for(Tuple tuple : relationTuples) {
+			if(tuple.getField(fieldName).toString().equals(matchingValue)) {
+				count++;
+			}
+		}
+		return count;
+	}
+	
+	// get the same value tuples in all the segments of a relation
+	public static int getSameTuplesCountAllSegments(String matching_value, String field_name, ArrayList<ArrayList<Tuple>> relationTuples) {
+		int count = 0;
+		for(int i = 0; i < relationTuples.size(); i++) {
+			for(int j = 0; j < relationTuples.get(i).size(); j++) {
+				if(relationTuples.get(i).get(j).getField(field_name).toString().equals(matching_value)) {
+					relationTuples.get(i).remove(relationTuples.get(i).get(j));
+				}
+			}
+		}
+		return count;
 	}
 	
 	
