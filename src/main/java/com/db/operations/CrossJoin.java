@@ -7,7 +7,7 @@ import com.db.storageManager.SchemaManager;
 public class CrossJoin {
 	
 	public static void crossJoin(Relation relation_one, Relation relation_two, MainMemory mem) {
-		Relation smallerRelation = null;
+		Relation smallerRelation;
 		
 		// find a smaller relation
 		if(relation_one.getNumOfBlocks() < relation_two.getNumOfBlocks()) {
@@ -25,9 +25,14 @@ public class CrossJoin {
 		}
 	}
 	
-	public static void twoPassCrossJoin(Relation relationOne, Relation relationTwo, SchemaManager schema_manager) {
+	public static void twoPassCrossJoin(Relation relationOne, Relation relationTwo, SchemaManager schema_manager, MainMemory mem) {
 		// create a new relation for the output
 		Relation output_relation = CommonHelper.createRelation(relationOne, relationTwo, schema_manager, "CrossJoin");
+	
+		for(int i = 0; i < relationOne.getNumOfBlocks(); i++) {
+			 relationOne.getBlock(i, 0);
+			 
+		}
 	}
 
 }

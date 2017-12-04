@@ -1,6 +1,6 @@
 create TABLE students (id INT,name STR20,age INT, marks INT ,height INT ,surname STR20,college STR20)
 create TABLE students2 (name STR20)
-INSERT INTO students (id,name,age,marks,height,surname,college) VALUES(1,"Joe",30,100,163,"Parker","TAMU")
+INSERT INTO students (id,name,age,marks,height,surname,college) VALUES(1,"s",30,100,163,"Parker","TAMU")
 INSERT INTO students (id,name,age,marks,height,surname,college) VALUES(1,"Chris",30,100,163,"Parker","TAMU")
 INSERT INTO  students (id,name,age,marks,height,surname,college) VALUES(2, "Abbey", 40, 100, 165,"Evans","TAMU")
 INSERT INTO  students (id,name,age,marks,height,surname,college) VALUES(2, "John", 40, 100, 165,"Evans","TAMU" )
