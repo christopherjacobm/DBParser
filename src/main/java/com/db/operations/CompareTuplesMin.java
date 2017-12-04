@@ -14,10 +14,10 @@ public class CompareTuplesMin implements Comparator<Tuple> {
 		@Override
 		public int compare(Tuple tupleOne, Tuple tupleTwo) {
 			if(tupleOne == null) {
-				return -1;
+				return 1;
 			}
 			if(tupleTwo == null) {
-				return 1;
+				return -1;
 			}
 			
 			String valueOne = tupleOne.getField(fieldName).toString();
