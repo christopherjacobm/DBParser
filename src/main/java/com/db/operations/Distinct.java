@@ -8,9 +8,9 @@ import com.db.storageManager.Tuple;
 
 public class Distinct {
 
-	public static void Distinct(Relation relation, MainMemory mem, ArrayList<String> fieldNames) {
+	public static ArrayList<Tuple> distinct(Relation relation, MainMemory mem, ArrayList<String> fieldNames) {
 		// arraylist for the sorted tuples
-		ArrayList<Tuple> result = new ArrayList<Tuple>();
+		ArrayList<Tuple> result;
 		
 		// relation fits in the main memory
 		if(relation.getNumOfBlocks() < mem.getMemorySize()) {
@@ -20,11 +20,7 @@ public class Distinct {
 		else {
 			result = FindDistinct.twoPassFindDistinct(relation, mem, fieldNames);
 		}
-		
-		// print the distinct tuples
-		System.out.println(result.get(0).getSchema().fieldNamesToString());
-		for(Tuple tuple : result) {
-			System.out.println(tuple);
-		}
+
+		return result;
 	}
 }
