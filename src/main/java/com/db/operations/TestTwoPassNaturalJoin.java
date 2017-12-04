@@ -1,5 +1,7 @@
 package com.db.operations;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -24,9 +26,7 @@ public class TestTwoPassNaturalJoin {
 		
 		// process the create statement
 		createStatement create = new createStatement();
-		
-		Relation relation_reference = create.parseCreateStatement(mem, "create TABLE students (id INT,name STR20,age INT, marks INT,height INT,surname STR20,college STR20 ,address STR20)", schema_manager);
-		//Relation relation_reference = create.parseCreateStatement(mem, "create TABLE tablename(id INT,name str20, s INT,  c INT, d INT, h INT, y INT, t INT)", schema_manager);
+		Relation relation_reference = create.parseCreateStatement(mem, "create TABLE tablename(id INT, name str20)", schema_manager);
 		//String statementType = getStatementType("CREATE TABLE tablename(name INT, id str20)");
 		
 		//***********************************************************************************************

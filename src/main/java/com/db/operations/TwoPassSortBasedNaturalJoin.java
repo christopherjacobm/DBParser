@@ -87,7 +87,7 @@ public class TwoPassSortBasedNaturalJoin {
 					Relation output_relation = CommonHelper.createRelation(relationOne, relationTwo, schema_manager);
 					
 					//joinTuples and return the arraylist of all the resulting tuples
-					result = crossProductTuples(mathcingTuples_relationOne, mathcingTuples_relationTwo, output_relation);
+					result = crossProductTuples(mathcingTuples_relationOne, mathcingTuples_relationTwo, output_relation, joinAttribute);
 					
 					// delete both Relation one small tuples and relation two small tuples
 					deleteSmallTuples(relationOneTuples, commonFieldValue_relationOne, joinAttribute);
@@ -151,11 +151,11 @@ public class TwoPassSortBasedNaturalJoin {
 		return matchingTuples;
 	}
 	
-	public ArrayList<Tuple> crossProductTuples(ArrayList<Tuple> listOne, ArrayList<Tuple> listTwo, Relation relation){
+	public ArrayList<Tuple> crossProductTuples(ArrayList<Tuple> listOne, ArrayList<Tuple> listTwo, Relation relation, String joinAttribute){
 		ArrayList<Tuple> result = new ArrayList<Tuple>();
 		for(int i = 0; i < listOne.size(); i++) {
 			for(int j = 0; i < listTwo.size(); i++) {
-				result.add(CommonHelper.joinTuples(listOne.get(i), listOne.get(j), relation));
+				result.add(CommonHelper.joinTuples(listOne.get(i), listOne.get(j), relation, joinAttribute));
 			}
 		}
 		return result;

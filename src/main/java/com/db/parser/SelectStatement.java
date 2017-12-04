@@ -1,16 +1,19 @@
 package com.db.parser;
 
+import com.db.operations.NaturalJoin;
 import com.db.storageManager.*;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import com.db.tree.Node;
 
 public class SelectStatement {
-
-    public SelectStatement() {
+    BufferedWriter bw;
+    public SelectStatement( BufferedWriter bw) {
         // default constructor
+        this.bw = bw;
     }
 
     public void parseSelectStatement(MainMemory mem, SchemaManager schemaManager, String statement) {
@@ -42,15 +45,15 @@ public class SelectStatement {
             }
 
             ArrayList<String> tables = Helper.trimAndSplitByComma(match.group(4));
-            //System.out.println("tables: "+tables[0]);
+            //System.out.println("tables: "+tables);
 
-            System.out.println("groupcount: "+match.groupCount());
+            /* System.out.println("groupcount: "+match.groupCount());
             System.out.println("group 3: "+match.group(3));
             System.out.println("group 4: "+match.group(4));
             System.out.println("group 5: "+match.group(5));
             System.out.println("group 6: "+match.group(6));
             System.out.println("group 7: "+match.group(7));
-            System.out.println("group 8: "+match.group(8));
+            System.out.println("group 8: "+match.group(8)); */
 
             if (match.group(5)!=null){//where exists
                 where=true;
@@ -60,44 +63,52 @@ public class SelectStatement {
             if (match.group(7)!=null){//order by exists
                 orderBy=true;
                 orderByColumnName = match.group(8).trim();
-                System.out.println("orderByColumnName: "+orderByColumnName);
+                //System.out.println("orderByColumnName: "+orderByColumnName);
             }
 
+            //=================PARSING DONE========================
 
-            //System.out.println("output is: " + bool + '\n');
+            if (tables.size()>1){//MULTI TABLE CASE
+                //System.out.println("multi table");
+                if (where){
+                    String naturalJoinColumn = wc.getNaturalJoinAttribute();
+                    if(naturalJoinColumn!=null){
+                        //natural join can be performed
+                        NaturalJoin.naturalJoin(mem, schemaManager, tables.get(0), tables.get(1), naturalJoinColumn );
+                    }
+                }
 
-            //=================PRINTING HEADINGS====================
-
-            System.out.println();
-            System.out.println("========================================");
+            } else {//SINGLE TABLE CASE
 
                 String relName = tables.get(0);
                 Relation r = schemaManager.getRelation(relName); //todo-handle cases with more tables
                 Schema schema = r.getSchema();
                 int numBlocksInRelation = r.getNumOfBlocks();
 
+                //=================PRINTING HEADINGS====================
+
+                printToConsoleAndFile("\n========================================\n");
+
                 //printing the column titles
-                ArrayList<String> field_names=schema.getFieldNames();
+                ArrayList<String> field_names = schema.getFieldNames();
                 if (star) {//for select *
                     for (String fName : field_names) {
-                        System.out.print(fName + " ");
+                        printToConsoleAndFile(fName + " ");
                     }
-                    System.out.println();
+                    printToConsoleAndFile("\n");
                 } else {
                     for (String attr : attrs) {
-                        System.out.print(attr + " ");
+                        printToConsoleAndFile(attr + " ");
                     }
-                    System.out.println();
+                    printToConsoleAndFile("\n");
                 }
 
-                System.out.println("----------------------------------------");
+                printToConsoleAndFile("========================================\n");
 
-            //=======================================================
-
-
+                //=======================================================
 
 
-            //--OPTIMIZING BASED ON PROJECTION - pushing selection?
+                //--OPTIMIZING BASED ON PROJECTION - pushing selection?
 
                 //if (order) do union of attrs and order_by_field_name and store in arraylist relevantFieldNames, else relevantFieldNames = attrs
                 ArrayList<String> relevantFieldNames = new ArrayList<>(attrs);
@@ -110,10 +121,10 @@ public class SelectStatement {
                 }
 
                 int tempRelBlockIndex = 0;
-                Relation tempRel=null;
-                Block lastBlock=null;
+                Relation tempRel = null;
+                Block lastBlock = null;
                 //if (distinct or order) make temp relation
-                if (distinct || orderBy){
+                if (distinct || orderBy) {
                     if (!star) {
                         for (String fName : relevantFieldNames)
                             relevantFieldTypes.add(schema.getFieldType(fName));
@@ -122,119 +133,138 @@ public class SelectStatement {
                         //make a temp relation
                         schema = schemaTemp;
                     }
-                    String tempRelName = relName+"temp";
-                    tempRel = schemaManager.createRelation(tempRelName,schema);
-                    System.out.println("tempRel's fields: "+tempRel.getSchema().getFieldNames());
-                    lastBlock = mem.getBlock(mem.getMemorySize()-1); //gets the last block of mem
+                    String tempRelName = relName + "temp";
+                    tempRel = schemaManager.createRelation(tempRelName, schema);
+                    System.out.println("tempRel's fields: " + tempRel.getSchema().getFieldNames());
+                    lastBlock = mem.getBlock(mem.getMemorySize() - 1); //gets the last block of mem
                     lastBlock.clear();
                 }
 
-            //--OPTIMIZING BASED ON PROJECTION DONE
+                //--OPTIMIZING BASED ON PROJECTION DONE
 
 
-            System.out.println("tables: "+tables);
-            System.out.println("attrs: "+attrs);
-            System.out.println("relevantFieldNames: "+relevantFieldNames);
+                //System.out.println("tables: " + tables);
+                //System.out.println("attrs: " + attrs);
+                //System.out.println("relevantFieldNames: " + relevantFieldNames);
 
 
-            //todo distinct, order by
+                //todo distinct, order by
                 //todo case sensitive everywhere in parsing!
                 int blocksLeft = numBlocksInRelation;
                 //int relationBlockIndex;
                 int memSize;
                 if (distinct || orderBy)
-                    memSize = mem.getMemorySize()-1; //9 blocks for reading, 1 for the temporary relation
+                    memSize = mem.getMemorySize() - 1; //9 blocks for reading, 1 for the temporary relation
                 else memSize = mem.getMemorySize();
 
                 int numBlocksToRead;
 
-                System.out.println("blocksLeft: "+blocksLeft);
+                //System.out.println("blocksLeft: " + blocksLeft);
 
-                    while (blocksLeft > 0) {
-                        //System.out.println("in loop, blocksLeft: "+blocksLeft);
-                        if(blocksLeft>memSize)numBlocksToRead = memSize;
-                        else numBlocksToRead = blocksLeft;
-                        r.getBlocks(numBlocksInRelation-blocksLeft, 0, numBlocksToRead);
-                        blocksLeft-=numBlocksToRead;
+                while (blocksLeft > 0) {
+                    //System.out.println("in loop, blocksLeft: "+blocksLeft);
+                    if (blocksLeft > memSize) numBlocksToRead = memSize;
+                    else numBlocksToRead = blocksLeft;
+                    r.getBlocks(numBlocksInRelation - blocksLeft, 0, numBlocksToRead);
+                    blocksLeft -= numBlocksToRead;
 
-                        ArrayList<Tuple> tuples = mem.getTuples(0,numBlocksToRead);
+                    ArrayList<Tuple> tuples = mem.getTuples(0, numBlocksToRead);
 
-                        System.out.println("before loop, where: "+where);
+                    //System.out.println("before loop, where: " + where);
 
-                        Field f;
-                        for (Tuple t : tuples) {
-                            if ((!where) || (where && wc.satisfiedByTuple(t))) {//if the where condition is true for this tuple, print it
-                                if (star) {//for select *
-                                    int numFields = t.getNumOfFields();
-                                    //System.out.println("in star numfields: "+numFields);
+                    Field f;
+                    for (Tuple t : tuples) {
+                        if ((!where) || (where && wc.satisfiedByTuple(t))) {//if the where condition is true for this tuple, print it
+                            if (star) {//for select *
+                                int numFields = t.getNumOfFields();
+                                //System.out.println("in star numfields: "+numFields);
 
-                                    if (distinct || orderBy){
-                                        //add this field after checking type
-                                        if (!lastBlock.isFull()) lastBlock.appendTuple(t);
-                                        else {
-                                            mem.setBlock(mem.getMemorySize()-1,lastBlock);
-                                            tempRel.setBlock(tempRelBlockIndex++,mem.getMemorySize()-1);
-                                            lastBlock.clear();
-                                            lastBlock.appendTuple(t);
-                                        }
-                                    }
+                                if (distinct || orderBy) {
+                                    //add this field after checking type
+                                    if (!lastBlock.isFull()) lastBlock.appendTuple(t);
                                     else {
-                                        for (int j = 0; j < numFields; j++) {
-                                            f = t.getField(j);
-                                            //if (distinct or order) write to temp relation instead of printing
-                                            System.out.print(f.toString() + " ");
-                                        }
-                                        System.out.println("");
+                                        mem.setBlock(mem.getMemorySize() - 1, lastBlock);
+                                        tempRel.setBlock(tempRelBlockIndex++, mem.getMemorySize() - 1);
+                                        lastBlock.clear();
+                                        lastBlock.appendTuple(t);
                                     }
-                                } else {//for select a,b
+                                } else {
+                                    for (int j = 0; j < numFields; j++) {
+                                        f = t.getField(j);
+                                        //if (distinct or order) write to temp relation instead of printing
+                                        printToConsoleAndFile(f.toString() + " ");
+                                    }
+                                    printToConsoleAndFile("\n");
+                                }
+                            } else {//for select a,b
 
-                                    if (distinct || orderBy){
-                                        Tuple tempTuple = tempRel.createTuple();
-                                        for (String fName : relevantFieldNames) {
-                                            f = t.getField(fName);
-                                            if (f.type==FieldType.INT)
-                                                tempTuple.setField(fName,f.integer);
-                                            else
-                                                tempTuple.setField(fName,f.str);
-                                        }
-                                        if (!lastBlock.isFull()) lastBlock.appendTuple(tempTuple);
-                                        else {
-                                            mem.setBlock(mem.getMemorySize()-1,lastBlock);
-                                            tempRel.setBlock(tempRelBlockIndex++,mem.getMemorySize()-1);
-                                            lastBlock.clear();
-                                            lastBlock.appendTuple(tempTuple);
-                                        }
+                                if (distinct || orderBy) {
+                                    Tuple tempTuple = tempRel.createTuple();
+                                    for (String fName : relevantFieldNames) {
+                                        f = t.getField(fName);
+                                        if (f.type == FieldType.INT)
+                                            tempTuple.setField(fName, f.integer);
+                                        else
+                                            tempTuple.setField(fName, f.str);
                                     }
+                                    if (!lastBlock.isFull()) lastBlock.appendTuple(tempTuple);
                                     else {
-                                        for (String fName : relevantFieldNames) {//loop thru relevantfieldnames (same as attrs here)
-                                            f = t.getField(fName);
-                                            //if (distinct or order) write to temp relation instead of printing
-                                            System.out.print(f.toString()+" ");
-                                        }
-                                        System.out.println("");
+                                        mem.setBlock(mem.getMemorySize() - 1, lastBlock);
+                                        tempRel.setBlock(tempRelBlockIndex++, mem.getMemorySize() - 1);
+                                        lastBlock.clear();
+                                        lastBlock.appendTuple(tempTuple);
                                     }
+                                } else {
+                                    for (String fName : relevantFieldNames) {//loop thru relevantfieldnames (same as attrs here)
+                                        f = t.getField(fName);
+                                        //if (distinct or order) write to temp relation instead of printing
+                                        printToConsoleAndFile(f.toString() + " ");
+                                    }
+                                    printToConsoleAndFile("\n");
                                 }
                             }
                         }
-
                     }
-                    if (distinct || orderBy) {
-                        if (!lastBlock.isEmpty()) { //write leftover tuples to temp relation
-                            mem.setBlock(mem.getMemorySize() - 1, lastBlock);
-                            tempRel.setBlock(tempRelBlockIndex++, mem.getMemorySize() - 1);
-                            lastBlock.clear();
+
+                }
+                if (distinct || orderBy) {
+                    if (!lastBlock.isEmpty()) { //write leftover tuples to temp relation
+                        mem.setBlock(mem.getMemorySize() - 1, lastBlock);
+                        tempRel.setBlock(tempRelBlockIndex++, mem.getMemorySize() - 1);
+                        lastBlock.clear();
+                    }
+
+                        /*if(tempRel.getNumOfBlocks()<=mem.getMemorySize()){//if the relation that remains fits in memory
+                            tempRel.getBlocks(0,0,mem.getMemorySize());
+                            ArrayList<Tuple> tuples = mem.getTuples(0,tempRel.getNumOfBlocks());
+                            localSort(tuples,orderByColumnName);
+                            if (distinct){
+                                discardDuplicates(tuples,attrs);
+                            }
+                            //project and print
+
+                        } else {
+
                         }
+                        */
 
-                        //
+                }
 
-                    }
+                printToConsoleAndFile("========================================\n\n");
 
-                    System.out.println("========================================");
-                    System.out.println();
+
+
+            }
         }
         else System.out.println("no match");
+
     }
 
+    private void printToConsoleAndFile(String str){
+        System.out.print(str);
+        try {if (bw!=null) bw.write(str); }
+        catch (IOException e) { e.printStackTrace(); }
+    }
 
     /*public Node makeTree(String groupOne, String groupTwo, String[] attrs, String groupFour) {
         Node select = new Node("SELECT");
