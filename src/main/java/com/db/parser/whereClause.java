@@ -26,7 +26,7 @@ public class whereClause {
         //for (String token:tokens)
             //System.out.println(token);
         tokensInPostFix = inToPost(tokens);
-    }
+    }  
 
     private ArrayList<String> tokenize(String input){
         //System.out.println("tokenize");

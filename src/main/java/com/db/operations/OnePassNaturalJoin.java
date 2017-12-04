@@ -59,7 +59,7 @@ public class OnePassNaturalJoin {
 			largeBlock = mem.getBlock(lastMemBlock);
 			largeTableTuples = largeBlock.getTuples();
 			for(Tuple largeTuple : largeTableTuples) {
-				for(int j = 0; j <smallTable.getNumOfBlocks(); j++) {
+				for(int j = 0; j < smallTable.getNumOfBlocks(); j++) {
 					smallBlock = mem.getBlock(j);
 					smallTableTuples = smallBlock.getTuples();
 					for(Tuple smallTuple : smallTableTuples) {
