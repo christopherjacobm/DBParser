@@ -72,6 +72,7 @@ public class OnePassNaturalJoin {
 		return result;
 	}
 	
+	// compare two tuples on the given field names, if equal join two tuples
 	public static void compareTupleValues(ArrayList<Tuple> result, Tuple largeTuple, Tuple smallTuple, String fieldValue, Relation relation) {
 		Tuple joinedTuple;
 		String fieldOne = smallTuple.getField(fieldValue).toString();
