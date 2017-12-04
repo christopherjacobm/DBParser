@@ -20,6 +20,14 @@ public class CommonHelper {
 		// field names and field types of the relation two
 		ArrayList<FieldType> field_types = relation_one.getSchema().getFieldTypes();
 		ArrayList<FieldType> field_types_two = relation_two.getSchema().getFieldTypes();
+
+		for(int i=0;i<field_names.size();i++){
+			if (field_names_two.contains(field_names.get(i))) {//remove the common field name (assuming only one is common)
+				field_names.remove(i);
+				field_types.remove(i);
+				break;
+			}
+		}
 		
 		// append all the field names of relation two to relation one field names
 		field_names.addAll(field_names_two);
@@ -35,6 +43,7 @@ public class CommonHelper {
 		}
 
 		Relation relation = schema_manager.createRelation(relation_name, schema);
+		//System.out.println("in createRelation: field names- "+schema.getFieldNames());
 		return relation;
 	}
 	
@@ -56,27 +65,33 @@ public class CommonHelper {
 	}
 	
 	// join two tuples into one new tuple
-	public static Tuple joinTuples(Tuple tupleOne, Tuple tupleTwo, Relation relation) {
+	public static Tuple joinTuples(Tuple tupleOne, Tuple tupleTwo, Relation relation, String joinAttribute) {
+
 		String setValue = null;
 		Tuple joinedTuple = relation.createTuple();
 		int tuple_one_size = tupleOne.getNumOfFields();
 		int tuple_two_size = tupleTwo.getNumOfFields();
 		int newTuple_size = tuple_one_size + tuple_two_size;
-		for(int i = 0; i < newTuple_size; i++) {
+		int setIndex=0;
+		for(int i=0;i < newTuple_size;i++) {
 			if(i < tuple_one_size) {
+				if (tupleOne.getSchema().getFieldOffset(joinAttribute)==i) { //if current field's name == joinAttribute, continue;
+					continue;
+				}
 				setValue = tupleOne.getField(i).toString();
 			}
 			else {
-					setValue = tupleOne.getField(i - tuple_one_size).toString();
+				setValue = tupleTwo.getField(i - tuple_one_size).toString();
 			}
 
-			if(isStringInt(setValue)) {								// field is of type int
-				joinedTuple.setField(i, stringToInteger(setValue));
+			if(CommonHelper.isStringInt(setValue)) {								// field is of type int
+				joinedTuple.setField(setIndex++, CommonHelper.stringToInteger(setValue));
 			}
 			else {																			// field is of type string
-				joinedTuple.setField(i, setValue);
+				joinedTuple.setField(setIndex++, setValue);
 			}
 		}
+		//System.out.println("in joinTuples: joinedTuple field names "+joinedTuple.getSchema().getFieldNames());
 		return joinedTuple;
 	}
 	

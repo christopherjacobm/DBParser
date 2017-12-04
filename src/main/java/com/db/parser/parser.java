@@ -1,53 +1,76 @@
 package com.db.parser;
 
 import com.db.storageManager.*;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class parser {
 	static SchemaManager schema_manager;
+	static FileWriter fw;
+	static BufferedWriter bw;
 
 	public static void main(String[] args) {
 		MainMemory mem = new MainMemory();
 		Disk disk = new Disk();
 		schema_manager = new SchemaManager(mem, disk);
 		
-		//Relation tableName = parse(tokens);
-		
 		//***********************************************************************************************
-		// process the create statement
-		createStatement create = new createStatement();
-		Relation relation_reference = create.parseCreateStatement(mem, "CREATE TABLE students (id INT, name STR20, age INT, marks INT, height INT, surname STR20, college STR20, address STR20)", schema_manager);
-		//Relation relation_reference = create.parseCreateStatement(mem, "create TABLE students(id INT, name STR20)", schema_manager);
 
 		double time = disk.getDiskTimer();
 		long ios = disk.getDiskIOs();
-		//***********************************************************************************************
-		// process the insert statement
-		InsertStatement insert = new InsertStatement();
-		insert.parseInsertStatement(relation_reference, mem, "INSERT INTO students (id,name,age,marks,height,surname,college,address) VALUES(1,\"Sarah\",30,100,163,\"Parker\",\"TAMU\",\"Cherry Street\")");
-		insert.parseInsertStatement(relation_reference, mem, "INSERT INTO  students (id,name,age,marks,height,surname,college,address) VALUES(2, \"Chris\", 40, 100, 165,\"Evans\",\"TAMU\",\"Stack\" )");
 
-		System.out.printf("Time: %.2f ms",(disk.getDiskTimer() - time));
-		System.out.println("\nIO's: "+(disk.getDiskIOs() - ios));
+		try {  //make a new output file
+			File outFile = new File("Output.txt");
+			boolean res = Files.deleteIfExists(outFile.toPath());
+			System.out.println("file deletion successful? :"+res);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
-		//SelectStatement select = new SelectStatement();
-		//select.parseSelectStatement(mem,schema_manager, "SELECT id, name      from tablename" );
-		
-		//***********************************************************************************************
-		// process the drop statement
-		//dropStatement drop = new dropStatement();
-		//drop.parseDeleteStatement("drop table tablename", schema_manager);
-		
-		//***********************************************************************************************
+		Scanner sc = new Scanner(System.in);
+		boolean quit=false;
 
-		//String inputQuery = "SELECT id,name FROM students WHERE name = \"Chris\" AND id = 2 AND college = \"TAMU\" AND age*2=80 ";
-		String inputQuery = "SELECT DISTINCT id,college FROM students ORDER BY college ";
-		executeStatement(getStatementType(inputQuery),inputQuery,mem);
+		while (!quit){
+			System.out.println("Enter query / f to read from file / q to quit. ");
+			String input = sc.nextLine();
 
-		String inputQuery2 = "SELECT * FROM studentstemp";
-		executeStatement(getStatementType(inputQuery),inputQuery2,mem);
+
+			try{ fw = new FileWriter("Output.txt",true); } //Create fileWriter to append output of select statements to outputfile
+			catch (IOException e) { e.printStackTrace(); }
+			if (fw!=null) bw = new BufferedWriter(fw);
+
+			switch(input){
+				case "f":
+					System.out.println("Input file name");
+					String fileName = sc.nextLine();
+					File file = new File(fileName);
+					ArrayList<String> statements = Helper.readStatementsFromFile(file);
+					for (String statement: statements){
+						executeStatement(getStatementType(statement),statement,mem,disk);
+					}
+					break;
+				case "q":
+					quit=true;
+					break;
+				default://tinysql statement
+					executeStatement(getStatementType(input),input,mem,disk);
+			}
+
+			try {
+				bw.flush();
+				bw.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 
 		System.out.printf("Time: %.2f ms",(disk.getDiskTimer() - time));
 		System.out.println("\nIO's: "+(disk.getDiskIOs() - ios));
@@ -62,30 +85,40 @@ public class parser {
 
 		// if the string is matched
 		if (match.find()) {
-			System.out.println("value is " + match.group(1));
+			//System.out.println("value is " + match.group(1));
 			return  match.group(1);
 		}
 		return null;
 		
 	}
 	
-	public static void executeStatement(String statementType, String statement, MainMemory mem) {
+	public static void executeStatement(String statementType, String statement, MainMemory mem, Disk disk) {
+		//System.out.println("executestatement for: "+statementType+" stmnt: "+statement);
 		switch (statementType.toLowerCase()) {
 		case "create":
 			createStatement create = new createStatement();
 			create.parseCreateStatement(mem, statement, schema_manager);
+			break;
 		case "insert":
 			InsertStatement insert = new InsertStatement();
-			//insert.parseInsertStatement(relation_reference, mem, statement);
+			insert.parseInsertStatement(mem, statement, schema_manager);
+			break;
 		case "select":
-			SelectStatement select = new SelectStatement();
+			double time = disk.getDiskTimer();
+			long ios = disk.getDiskIOs();
+			SelectStatement select = new SelectStatement(bw);
 			select.parseSelectStatement(mem,schema_manager,statement);
+			System.out.printf("Select Time: %.2f ms",(disk.getDiskTimer() - time));
+			System.out.println("\nSelect IO's: "+(disk.getDiskIOs() - ios));
+			break;
 		case "drop":
 			dropStatement drop = new dropStatement();
 			drop.parseDeleteStatement(statement, schema_manager);
+			break;
 		case "delete":	
 			deleteStatement delete = new deleteStatement();
 			delete.parseDeleteStatement(statement, schema_manager, mem);
+			break;
 		}
 	}
 }

@@ -275,4 +275,19 @@ public class whereClause {
         }
 
     }
+
+    // return attribute name if natural join needs to be applied
+    // eg: tokensInPostFix = <name, name, = >
+    public String getNaturalJoinAttribute() {
+        for (int i=2;i<tokensInPostFix.size();i++) {
+            if (tokensInPostFix.get(i).equals("=")) {
+                String token1 = tokensInPostFix.get(i-2);
+                String token2 = tokensInPostFix.get(i-1);
+                if (getTokenType(token1) == TokenType.COL_NAME && getTokenType(token2) == TokenType.COL_NAME && token1.equals(token2)) {
+                    return token1;
+                }
+            }
+        }
+        return null;
+    }
 }
