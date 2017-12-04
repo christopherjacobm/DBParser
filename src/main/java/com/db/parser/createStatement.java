@@ -19,7 +19,7 @@ public class createStatement {
 	
 	// create statement
 	public Relation parseCreateStatement(MainMemory mem, String statement, SchemaManager schema_manager) {
-		String regexValue = "^\\s*create\\s+table\\s+([a-z][0-9a-z]*)\\s*\\(([a-z][0-9a-z]*\\s+(?:STR20|INT)\\s*(?:,\\s*[a-z][0-9a-z]*\\s+(?:INT|STR20))*\\s*)\\)$";
+		String regexValue = "^\\s*create\\s+table\\s+([a-z][0-9a-z]*)\\s*\\(([a-z][0-9a-z]*\\s+(?:STR20|INT)\\s*(?:,\\s*[a-z][0-9a-z]*\\s+(?:INT|STR20)\\s*)*\\s*)\\)$";
 		Pattern regex = Pattern.compile(regexValue, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 		Matcher match = regex.matcher(statement);
 
@@ -44,7 +44,9 @@ public class createStatement {
 			//printRelation(relation_reference);
 			
 			return relation_reference;
-		}	
+		} else {
+			System.out.println("in parseCreateStatement, no match!");
+		}
 		return null;
 	}
 	

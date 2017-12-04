@@ -4,12 +4,8 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import com.db.storageManager.Block;
-import com.db.storageManager.FieldType;
-import com.db.storageManager.MainMemory;
-import com.db.storageManager.Relation;
-import com.db.storageManager.Schema;
-import com.db.storageManager.Tuple;
+
+import com.db.storageManager.*;
 
 public class InsertStatement {
 	
@@ -18,20 +14,25 @@ public class InsertStatement {
 	}
 	
 	// insert statement
-	public void parseInsertStatement(Relation ref, MainMemory mem, String statement) {
+	public void parseInsertStatement(MainMemory mem, String statement, SchemaManager schemaManager) {
 		String regexValue = "^\\s*insert\\s+into\\s+([a-z][a-z0-9]*)\\s*\\((\\s*[a-z][a-z0-9]*\\s*(?:,\\s*[a-z][a-z0-9]*\\s*)*)\\)\\s+values\\s*\\(\\s*((NULL|\"[^\"]*\"|[0-9]+)\\s*(?:,\\s*(NULL|\"[^\"]*\"|[0-9]+)\\s*)*)\\)$";
 		Pattern regex = Pattern.compile(regexValue, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 		Matcher match = regex.matcher(statement);
-
-		System.out.println("parse insert");
+		Relation rel;
+		String relName;
+		//System.out.println("parse insert");
 		// if the string is matched
 		if (match.find()) {
 			//System.out.println("value is " + match.group(1) + " " + match.group(2) + " " + match.group(3));
 			String[] attributeNames = trimAndSplitByComma(match.group(2));
 			String[] attributeValues = trimAndSplitByComma(match.group(3));
+
+			//get rel name from regex
+			relName = match.group(1);
+			rel = schemaManager.getRelation(relName);
 			
 			// create a tuple with given values
-			createTuple(ref, mem, attributeNames, attributeValues);
+			createTuple(rel, mem, attributeNames, attributeValues);
 		}else{
 			System.out.println("parseInsertStatement: no match!");
 		}

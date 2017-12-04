@@ -49,21 +49,21 @@ public class OnePassNaturalJoin {
 		Block smallBlock;
 		ArrayList<Tuple> smallTableTuples;
 		ArrayList<Tuple> largeTableTuples;
-		ArrayList<Tuple> result = null;
+		ArrayList<Tuple> result = new ArrayList<>();
 		
 		int lastMemBlock = mem.getMemorySize() -1;
 		
 		// bring block from the larger tuple one by one into the main memory
 		for(int i = 0; i < largeTable.getNumOfBlocks(); i++) {
-			largeTable.getBlock(0, lastMemBlock);
+			largeTable.getBlock(i, lastMemBlock);
 			largeBlock = mem.getBlock(lastMemBlock);
 			largeTableTuples = largeBlock.getTuples();
 			for(Tuple largeTuple : largeTableTuples) {
-				for(int j = 0; j < smallTable.getNumOfBlocks(); j++) {
+				for(int j = 0; j <smallTable.getNumOfBlocks(); j++) {
 					smallBlock = mem.getBlock(j);
 					smallTableTuples = smallBlock.getTuples();
 					for(Tuple smallTuple : smallTableTuples) {
-						compareTupleValues(result, largeTuple, smallTuple, joinAttribute, result_relation);
+						compareTupleValues(result, largeTuple, smallTuple, joinAttribute, result_relation, tableOneSize, tableTwoSize);
 					}
 				}
 					
@@ -72,19 +72,23 @@ public class OnePassNaturalJoin {
 		return result;
 	}
 	
-	// compare two tuples on the given field names, if equal join two tuples
-	public static void compareTupleValues(ArrayList<Tuple> result, Tuple largeTuple, Tuple smallTuple, String fieldValue, Relation relation) {
+
+	public static void compareTupleValues(ArrayList<Tuple> result, Tuple largeTuple, Tuple smallTuple, String joinAttribute, Relation relation,int tableOneSize, int tableTwoSize ) {
+		//System.out.println("in comparetuplevalues, fieldnames: "+relation.getSchema().getFieldNames());
+
 		Tuple joinedTuple;
-		String fieldOne = smallTuple.getField(fieldValue).toString();
-		String fiedTwo =  largeTuple.getField(fieldValue).toString();
-		if(CommonHelper.isStringInt(fieldOne) && CommonHelper.isStringInt(fiedTwo)) {								//field type is int
-			if(CommonHelper.stringToInteger(fieldOne) == CommonHelper.stringToInteger(fiedTwo)) {
-				joinedTuple = CommonHelper.joinTuples(smallTuple, largeTuple, relation);
+		String fieldOne = smallTuple.getField(joinAttribute).toString();
+		String fieldTwo =  largeTuple.getField(joinAttribute).toString();
+		if(CommonHelper.isStringInt(fieldOne) && CommonHelper.isStringInt(fieldTwo)) {								//field type is int
+			if(CommonHelper.stringToInteger(fieldOne) == CommonHelper.stringToInteger(fieldTwo)) {
+				if(tableOneSize < tableTwoSize) joinedTuple = CommonHelper.joinTuples(smallTuple, largeTuple, relation, joinAttribute);
+				else joinedTuple = CommonHelper.joinTuples(largeTuple, smallTuple, relation, joinAttribute);
 				result.add(joinedTuple);		
 			}
 		}else {
-			if(fieldOne.equals(fiedTwo)) {
-				joinedTuple = CommonHelper.joinTuples(smallTuple, largeTuple, relation);
+			if(fieldOne.equals(fieldTwo)) {
+				if(tableOneSize < tableTwoSize) joinedTuple = CommonHelper.joinTuples(smallTuple, largeTuple, relation, joinAttribute);
+				else joinedTuple = CommonHelper.joinTuples(largeTuple, smallTuple, relation, joinAttribute);
 				result.add(joinedTuple);	
 			}
 		}
