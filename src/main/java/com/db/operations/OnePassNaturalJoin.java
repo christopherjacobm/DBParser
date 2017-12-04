@@ -19,7 +19,7 @@ public class OnePassNaturalJoin {
 		Relation tableTwo = schema_manager.getRelation(relationTwo);
 		
 		// create a new relation for the output
-		Relation result_relation = CommonHelper.createRelation(tableOne, tableTwo, schema_manager);
+		Relation result_relation = CommonHelper.createRelation(tableOne, tableTwo, schema_manager, "NaturalJoin");
 		
 		// find the size of relation one
 		int tableOneSize = tableOne.getNumOfBlocks();

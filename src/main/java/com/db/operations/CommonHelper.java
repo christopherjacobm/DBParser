@@ -12,7 +12,7 @@ import com.db.storageManager.Tuple;
 
 public class CommonHelper {
 
-	public static Relation createRelation(Relation relation_one, Relation relation_two, SchemaManager schema_manager) {
+	public static Relation createRelation(Relation relation_one, Relation relation_two, SchemaManager schema_manager, String operationName) {
 		// field names and field types of relation one
 		ArrayList<String> field_names = relation_one.getSchema().getFieldNames();
 		ArrayList<String> field_names_two = relation_two.getSchema().getFieldNames();
@@ -37,7 +37,7 @@ public class CommonHelper {
 		
 		Schema schema = new Schema(field_names, field_types);
 		
-		String relation_name = relation_one.getRelationName() + "NaturalJoin" + relation_two.getRelationName();
+		String relation_name = relation_one.getRelationName() + operationName + relation_two.getRelationName();
 		if(schema_manager.relationExists(relation_name)) {
 			schema_manager.deleteRelation(relation_name);
 		}

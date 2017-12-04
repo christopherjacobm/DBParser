@@ -84,7 +84,7 @@ public class TwoPassSortBasedNaturalJoin {
 					ArrayList<Tuple> mathcingTuples_relationTwo = getMatchingTuples(relationTwoTuples, joinAttribute, commonFieldValue_relationTwo);
 					
 					// create a new relation for the output
-					Relation output_relation = CommonHelper.createRelation(relationOne, relationTwo, schema_manager);
+					Relation output_relation = CommonHelper.createRelation(relationOne, relationTwo, schema_manager, "NaturalJoin");
 					
 					//joinTuples and return the arraylist of all the resulting tuples
 					result = crossProductTuples(mathcingTuples_relationOne, mathcingTuples_relationTwo, output_relation, joinAttribute);

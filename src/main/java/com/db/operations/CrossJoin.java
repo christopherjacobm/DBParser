@@ -2,6 +2,7 @@ package com.db.operations;
 
 import com.db.storageManager.MainMemory;
 import com.db.storageManager.Relation;
+import com.db.storageManager.SchemaManager;
 
 public class CrossJoin {
 	
@@ -24,8 +25,9 @@ public class CrossJoin {
 		}
 	}
 	
-	public static void twoPassCrossJoin(Relation relation_one, Relation relation_two) {
-		          
+	public static void twoPassCrossJoin(Relation relationOne, Relation relationTwo, SchemaManager schema_manager) {
+		// create a new relation for the output
+		Relation output_relation = CommonHelper.createRelation(relationOne, relationTwo, schema_manager, "CrossJoin");
 	}
 
 }
