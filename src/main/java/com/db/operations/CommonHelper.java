@@ -151,10 +151,11 @@ public class CommonHelper {
 		// size of main memory (10)
 		int mem_size = mem.getMemorySize();
 		
-		int temp = relationBlocks - sortedBlocks;
+
 		
 		// while all the blocks on disk are not sorted
-		while(sortedBlocks != relationBlocks) {
+		while(sortedBlocks < relationBlocks) {
+			int temp = relationBlocks - sortedBlocks;
 			if(temp > mem_size) {				// blocks left to be processed dont fit in the main memory
 				num_blocks= mem_size;
 			}
@@ -163,7 +164,8 @@ public class CommonHelper {
 			}
 			// read severals blocks from the disk and store in the main memory
 			relation.getBlocks(sortedBlocks, 0, num_blocks);
-			
+
+			System.out.println("inside the while loop********************************************8f");
 			// read all the tuples stored in the main memory starting from block index 0 to num_blocks
 			ArrayList<Tuple> tuples = mem.getTuples(0, num_blocks);
 			
@@ -191,7 +193,7 @@ public class CommonHelper {
 
 	
 	public static ArrayList<ArrayList<Tuple>> readBlockFromSublist(ArrayList<Integer> sublist, Relation relation, MainMemory mem, ArrayList<ArrayList<Tuple>> relationTuples, int startingIndex, int[] blocksRead_tableOne) {
-
+		System.out.print("Inside readBlockFromSublist : sublist_size" + sublist.size());
 		// read one block from each sublist in relation One into the main memory
 		for(int i = 0; i < sublist.size(); i++) {
 			relation.getBlock(sublist.get(i), i + startingIndex);            			// read one block from relation and store it in the main memory at the given index
@@ -209,12 +211,12 @@ public class CommonHelper {
 				// not last element and there are more blocks to read from the sublist
 				if(i < last_element && blocksRead[i] < mem.getMemorySize()) {							// if not the last element in the arraylist, that last sublist does not gurantee to have 10 bloacks
 					relation.getBlock(sublist.get(i) + blocksRead[i], i + startingIndex);
-					relationTuples.add(mem.getBlock(i + startingIndex).getTuples());									    // add all the tuples read into memory into the arraylist
+					relationTuples.get(i).addAll(mem.getBlock(i + startingIndex).getTuples());									    // add all the tuples read into memory into the arraylist
 					blocksRead[i]++;       															// increment the number of read blocks of the sublist
 				}
 				else if(i == last_element && blocksRead[i] < num_blocks_last_sublist) {     		// last sublist and all the blocks in sublist have not been read yet
 					relation.getBlock(sublist.get(i) + blocksRead[i], i + startingIndex);
-					relationTuples.add(mem.getBlock(i + startingIndex).getTuples());									    // add all the tuples read into memory into the arraylist
+					relationTuples.get(i).addAll(mem.getBlock(i + startingIndex).getTuples());									    // add all the tuples read into memory into the arraylist
 					blocksRead[i]++; 																// increment the number of read blocks of the sublist
 				}
 			}
