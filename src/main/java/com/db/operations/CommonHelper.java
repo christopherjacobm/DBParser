@@ -21,13 +21,14 @@ public class CommonHelper {
 		ArrayList<FieldType> field_types = relation_one.getSchema().getFieldTypes();
 		ArrayList<FieldType> field_types_two = relation_two.getSchema().getFieldTypes();
 
-		for(int i=0;i<field_names.size();i++){
+		/*for(int i=0;i<field_names.size();i++){
 			if (field_names_two.contains(field_names.get(i))) {//remove the common field name (assuming only one is common)
 				field_names.remove(i);
 				field_types.remove(i);
 				break;
 			}
-		}
+		} */
+		//todo uncomment for nat join
 		
 		// append all the field names of relation two to relation one field names
 		field_names.addAll(field_names_two);
@@ -75,7 +76,7 @@ public class CommonHelper {
 		int setIndex=0;
 		for(int i=0;i < newTuple_size;i++) {
 			if(i < tuple_one_size) {
-				if (tupleOne.getSchema().getFieldOffset(joinAttribute)==i) { //if current field's name == joinAttribute, continue;
+				if (joinAttribute!=null && tupleOne.getSchema().getFieldOffset(joinAttribute)==i) { //if current field's name == joinAttribute, continue;
 					continue;
 				}
 				setValue = tupleOne.getField(i).toString();
@@ -94,7 +95,7 @@ public class CommonHelper {
 		//System.out.println("in joinTuples: joinedTuple field names "+joinedTuple.getSchema().getFieldNames());
 		return joinedTuple;
 	}
-	
+
 	// get the number starting block number of all the sublists
 	public static ArrayList<Integer> getSublist(Relation relation, MainMemory mem){
 		
