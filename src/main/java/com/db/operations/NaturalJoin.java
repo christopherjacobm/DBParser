@@ -39,9 +39,9 @@ public class NaturalJoin {
 				
 		// the smaller table fits in the main memory
 		if(smallerTable.getNumOfBlocks() < mem.getMemorySize()) {
-			System.out.println("OnePassNaturalJoin!!");
-			System.out.println("tsble1 size: "+tableOneSize);
-			System.out.println("tsble2 size: "+tableTwoSize);
+			//System.out.println("OnePassNaturalJoin!!");
+			//System.out.println("tsble1 size: "+tableOneSize);
+			//System.out.println("tsble2 size: "+tableTwoSize);
 
 
 			// use one pass natural join algorithm
@@ -49,24 +49,13 @@ public class NaturalJoin {
 			result = OnePassNaturalJoin.naturalJoin(mem, schema_manager, relationOne, relationTwo, joinAttribute);
 		}
 		else { // both tables dont fit in the main memory
-			System.out.println("TwoPassNaturalJoin!!");
-			System.out.println("tsble1 size: "+tableOneSize);
-			System.out.println("tsble2 size: "+tableTwoSize);
+			//System.out.println("TwoPassNaturalJoin!!");
+			//System.out.println("tsble1 size: "+tableOneSize);
+			//System.out.println("tsble2 size: "+tableTwoSize);
 			TwoPassSortBasedNaturalJoin twoPassJoin = new TwoPassSortBasedNaturalJoin();
 			result = twoPassJoin.twoPassSortBasedNaturalJoin(relationOne, relationTwo, joinAttribute, schema_manager, mem);
 		}
-		
-		// print the result	
-		if(result != null) {
-			System.out.println(result.get(0).getSchema().fieldNamesToString());      
-			for(int i = 0; i< result.size(); i++) {
-				System.out.println(result.get(i));
-			}
-		}
-		else {
-			System.out.println("No match in natural join");
-		}
-		
+
 		return result;
 	}
 }

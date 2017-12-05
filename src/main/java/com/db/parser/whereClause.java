@@ -288,7 +288,7 @@ public class whereClause {
                 String token1 = tokensInPostFix.get(i-2);
                 String token2 = tokensInPostFix.get(i-1);
                 if (getTokenType(token1) == TokenType.COL_NAME && getTokenType(token2) == TokenType.COL_NAME && Helper.removeTableNameAndDotIfExists(token1).equals(Helper.removeTableNameAndDotIfExists(token2))) {
-                    return token1;
+                    return Helper.removeTableNameAndDotIfExists(token1);
                 }
         }
         }

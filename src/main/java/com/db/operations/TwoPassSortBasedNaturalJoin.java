@@ -208,8 +208,8 @@ public class TwoPassSortBasedNaturalJoin {
 	
 	// find the tuples having the same attribute value as the matching value
 	public ArrayList<Tuple> getMatchingTuples(ArrayList<ArrayList<Tuple>> relationtuples, String joinAttribute, String macthingValue){
-		System.out.println("Inside getMatchingTuples: matching value " +macthingValue );
-		System.out.println("Inside getMatchingTuples: join attribute " +joinAttribute );
+		//System.out.println("Inside getMatchingTuples: matching value " +macthingValue );
+		//System.out.println("Inside getMatchingTuples: join attribute " +joinAttribute );
 		ArrayList<Tuple> matchingTuples = new ArrayList<Tuple>();
 		// loop over each sublist
 		for(int i = 0; i < relationtuples.size(); i++) {

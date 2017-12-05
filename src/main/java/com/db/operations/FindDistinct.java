@@ -97,28 +97,28 @@ public class FindDistinct {
 				
 		Tuple compareTuple = null;
 		Tuple smallestTuple = null;
-		System.out.println("fieldnames: "+fieldNames);
+		//System.out.println("fieldnames: "+fieldNames);
 		
 		// while the is not empty
 		while(relationTuples.size() != 0) {
 			smallestTuple = Collections.min(relationTuples, new CompareTuplesSort(fieldNames));
 
-			System.out.println("smallestTuple: "+smallestTuple.toString(false));
-			if (compareTuple!=null) System.out.println("compareTuple: "+compareTuple.toString(false));
+			//System.out.println("smallestTuple: "+smallestTuple.toString(false));
+			//if (compareTuple!=null) System.out.println("compareTuple: "+compareTuple.toString(false));
 
 			
 			// only add to the final output if distinct 
 			if(!areDistinctColumnsEqual(fieldNames, smallestTuple, compareTuple)) {
 				result.add(smallestTuple);
 				compareTuple = smallestTuple;
-				System.out.println("inside if");
+				//System.out.println("inside if");
 			}
 	
 			// remove the smallest tuple
 			relationTuples.remove(smallestTuple);
 			
 		}
-		System.out.println("In onePassFindDistinct,result: "+result);
+		//System.out.println("In onePassFindDistinct,result: "+result);
 		return result;
 		
 	}
