@@ -1,5 +1,6 @@
 package com.db.parser;
 
+import com.db.operations.CompareTuplesSort;
 import com.db.operations.Distinct;
 import com.db.operations.NaturalJoin;
 import com.db.operations.Sort;
@@ -8,6 +9,7 @@ import com.db.storageManager.*;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,7 +21,7 @@ public class SelectStatement {
     }
 
     public void parseSelectStatement(MainMemory mem, SchemaManager schemaManager, String statement) {
-        String attributes = "(\\s*[a-z][a-z0-9]*\\s*(?:,\\s*[a-z][a-z0-9]*\\s*)*)";
+        String attributes = "(\\s*[a-z][a-z.0-9]*\\s*(?:,\\s*[a-z][a-z.0-9]*\\s*)*)";
         String regexValue = "^\\s*select(\\s+distinct)?\\s+(\\*|"+attributes+")\\s+from\\s+"+attributes+"\\s*(where)?(.*?)(?=order by|$)(order by)?(.*)?$"; //parse out order by, don't give it to whereclause
         Pattern regex = Pattern.compile(regexValue, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
         Matcher match = regex.matcher(statement);
@@ -69,14 +71,16 @@ public class SelectStatement {
             }
 
             //=================PARSING DONE========================
-
+            //todo in case of cross join/ nat join, have to keep ALL COMMON COLUMN NAMES in t.name style attributes
+            //todo first remove all tablenames from attribute names for each table
+            //todo then add it for common attributes
             if (tables.size()>1){//MULTI TABLE CASE
                 //System.out.println("multi table");
                 if (where){
                     String naturalJoinColumn = wc.getNaturalJoinAttribute();
                     if(naturalJoinColumn!=null){
                         //natural join can be performed
-                        NaturalJoin.naturalJoin(mem, schemaManager, tables.get(0), tables.get(1), naturalJoinColumn );
+                        NaturalJoin.naturalJoin(mem, schemaManager, tables.get(0), tables.get(1), naturalJoinColumn ); //todo can give 'name' only here
                     }
                 }
 
@@ -85,9 +89,18 @@ public class SelectStatement {
             } else {//SINGLE TABLE CASE
 
                 String relName = tables.get(0);
-                Relation r = schemaManager.getRelation(relName); //todo-handle cases with more tables
+                Relation r = schemaManager.getRelation(relName);
                 Schema schema = r.getSchema();
                 int numBlocksInRelation = r.getNumOfBlocks();
+
+                //from attrs, orderby attr, remove dot and everything before it
+                for(int i=0;i<attrs.size();i++){
+                    attrs.set(i,Helper.removeTableNameAndDotIfExists(attrs.get(i)));
+                }
+                if (orderBy) orderByColumnName = Helper.removeTableNameAndDotIfExists(orderByColumnName);
+
+                System.out.println("attrs after removal: "+attrs);
+                System.out.println("orderByColumnName after removal: "+orderByColumnName);
 
                 //=================PRINTING HEADINGS====================
 
@@ -186,6 +199,8 @@ public class SelectStatement {
 
                                 if (distinct || orderBy) {
                                     //add this field after checking type
+
+
                                     if (!lastBlock.isFull()) lastBlock.appendTuple(t);
                                     else {
                                         mem.setBlock(mem.getMemorySize() - 1, lastBlock);
@@ -239,7 +254,7 @@ public class SelectStatement {
                         lastBlock.clear();
                     }
 
-                    System.out.println(tempRel.getNumOfTuples());
+                    //System.out.println(tempRel.getNumOfTuples());
 
                     //=========APPLY DISTINCT & ORDER BY==========
 
@@ -255,55 +270,65 @@ public class SelectStatement {
                             printToConsoleAndFile(tuple.toString(false));
                             printToConsoleAndFile("\n");
                         }
-
                     }
 
                     if (orderBy && !distinct){
-                        ArrayList<String> sortColumn = new ArrayList<String>();
+                        ArrayList<String> sortColumn = new ArrayList<>();
                         sortColumn.add(orderByColumnName);
                         result = Sort.sort(tempRel, mem, sortColumn);
 
-                    for(Tuple tuple : result) {
-                        for (String fName : attrs) {//loop thru attrs
-                            Field f = tuple.getField(fName);
-                            //if (distinct or order) write to temp relation instead of printing
-                            printToConsoleAndFile(f.toString() + " ");
-                        }
-                        printToConsoleAndFile("\n");
-                    }
+                        projectAndOutput(result,attrs,star);
+
                     }
 
                     if(orderBy && distinct){
-                        ArrayList<String> sortColumn = new ArrayList<String>();
-                        sortColumn.add(orderByColumnName);
-                        result = Sort.sort(tempRel, mem, sortColumn);
+                        if(tempRel.getNumOfBlocks() < mem.getMemorySize()) {
+                            System.out.println("Calling distinct now");
+                            if (star) result = Distinct.distinct(tempRel, mem, tempRel.getSchema().getFieldNames());
+                            else result = Distinct.distinct(tempRel, mem, attrs);
 
-                        System.out.println("Calling distinct now");
-                        if (star) result = Distinct.distinct(tempRel, mem, tempRel.getSchema().getFieldNames());
-                        else result = Distinct.distinct(tempRel, mem, attrs);
+                            ArrayList<String> sortColumn = new ArrayList<>();
+                            sortColumn.add(orderByColumnName);
+                            Collections.sort(result, new CompareTuplesSort(sortColumn));
 
-                        //todo in 1 pass case, give output of one as input to the other. in 2 pass case, make temp relation after one and give to other
-                    }
+                            //result = Sort.sort(tempRel, mem, sortColumn);
+                        } else { //2 pass
+                            System.out.println("Calling distinct now");
+                            if (star) result = Distinct.distinct(tempRel, mem, tempRel.getSchema().getFieldNames());
+                            else result = Distinct.distinct(tempRel, mem, attrs);
 
-                        /*if(tempRel.getNumOfBlocks()<=mem.getMemorySize()){//if the relation that remains fits in memory
-                            tempRel.getBlocks(0,0,mem.getMemorySize());
-                            ArrayList<Tuple> tuples = mem.getTuples(0,tempRel.getNumOfBlocks());
-                            localSort(tuples,orderByColumnName);
-                            if (distinct){
-                                discardDuplicates(tuples,attrs);
+
+                            String tempRelDistinctName = tempRel.getRelationName()+"distinct";
+                            //write result to new tempRelation?
+                            if (schemaManager.relationExists(tempRelDistinctName))
+                                schemaManager.deleteRelation(tempRelDistinctName);
+                            Relation tempRelDistinct = schemaManager.createRelation(tempRelDistinctName,tempRel.getSchema());
+
+                            int blockCount = 0;
+                            Block b = mem.getBlock(0);
+
+                            while(!result.isEmpty()) {
+                            b.clear();
+                            for(int i=0;i<tempRel.getSchema().getTuplesPerBlock();i++){
+                                if(!result.isEmpty()){
+                                    Tuple t = result.get(0);
+                                    b.setTuple(i,t);
+                                    result.remove(t);
+                                }
                             }
-                            //project and print
+                            tempRelDistinct.setBlock(blockCount++,0);
+                            }
 
-                        } else {
+                            ArrayList<String> sortColumn = new ArrayList<>();
+                            sortColumn.add(orderByColumnName);
+                            result = Sort.sort(tempRelDistinct, mem, sortColumn);
 
                         }
-                        */
 
+                        projectAndOutput(result,attrs,star);
+                    }
                 }
-
                 printToConsoleAndFile("========================================\n\n");
-
-
 
             }
         }
@@ -317,32 +342,17 @@ public class SelectStatement {
         catch (IOException e) { e.printStackTrace(); }
     }
 
-    /*public Node makeTree(String groupOne, String groupTwo, String[] attrs, String groupFour) {
-        Node select = new Node("SELECT");
-        Node distinct = null;
-        Node[] attributes = null;
-        if (groupOne !=null) {
-            distinct = new Node("DISTINCT");
-            select.getChildren().add(distinct);
+    private void projectAndOutput (ArrayList<Tuple> tuples, ArrayList<String> attributes, boolean star){
+        for(Tuple tuple : tuples) {
+            if(star){
+                printToConsoleAndFile(tuple.toString(false));
+            } else {
+                for (String fName : attributes) {//loop thru attrs
+                    Field f = tuple.getField(fName);
+                    printToConsoleAndFile(f.toString() + " ");
+                }
+            }
+            printToConsoleAndFile("\n");
         }
-        Node attribute_names = new Node("ATTRIBUTE_NAMES");
-        select.getChildren().add(attribute_names);
-
-        for(int i = 0; i <attrs.length; i++) {
-            attributes[i] = new Node(attrs[i]);
-        }
-
-    		//for(int i = 0; i <attributes.length; i++ ) {
-                //select.getChildren(0).
-            //}
-
-        if (groupTwo !=null) {
-            Node selectStar = new Node("PROJECTION");
-            select.getChildren().add(selectStar);
-        }
-        select.getChildren().add(attribute_names);
-
-        return null;
     }
-    */
 }

@@ -53,4 +53,10 @@ public class Helper {
         }
 
     }
+
+    public static String removeTableNameAndDotIfExists(String str){ //if the string is of the form table1.name, it returns name.
+        int dotIndex = str.indexOf('.');
+        if (dotIndex == -1) return str;
+        else return str.substring(dotIndex+1);
+    }
 }

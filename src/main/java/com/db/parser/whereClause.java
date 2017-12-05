@@ -20,7 +20,6 @@ public class whereClause {
     }
 
     public whereClause(String query) {
-    //todo see if only where part of query should be passed
         //System.out.println("whereclause constructor");
         ArrayList<String> tokens = tokenize(query);
         //for (String token:tokens)
@@ -141,7 +140,7 @@ public class whereClause {
 
 //============================================================
 
-    public boolean satisfiedByTuple(Tuple t) {//todo tablename.attrname cases
+    public boolean satisfiedByTuple(Tuple t) {
         //evaluate the postfix where cluase for the given tuple
         if (tokensInPostFix == null) {
             System.out.println("ERROR: no postfix expression found!");
@@ -221,9 +220,11 @@ public class whereClause {
         if (getTokenType(token)==TokenType.INTEGER)
             return Integer.parseInt(token);
         else if (getTokenType(token)==TokenType.COL_NAME) {
-            FieldType fType = t.getSchema().getFieldType(token);
+            //dot logic-token may/may not have . , field name in schema may/may not have .
+            String colName = getColNameMatchingToken(token,t);
+            FieldType fType = t.getSchema().getFieldType(colName);
             if (fType == FieldType.INT) {
-                return t.getField(token).integer;
+                return t.getField(colName).integer;
             }
         }
         System.out.println("ERROR: Trying integer operation on string!");
@@ -237,10 +238,11 @@ public class whereClause {
             //System.out.println("token is a literal: "+token);
             return token;
         } else if (getTokenType(token)==TokenType.COL_NAME) {
-            FieldType fType = t.getSchema().getFieldType(token);
+            String colName = getColNameMatchingToken(token,t);
+            FieldType fType = t.getSchema().getFieldType(colName);
             if (fType == FieldType.STR20) {
                 //System.out.println("token is a column string: "+t.getField(token).str);
-                return t.getField(token).str;
+                return t.getField(colName).str;
             }
         }
         System.out.println("ERROR: Trying string operation on integer!");
@@ -263,7 +265,8 @@ public class whereClause {
             else
                 colToken = tokenLeft;
             //check if it is INT or STR20
-            FieldType fType = t.getSchema().getFieldType(colToken);
+            String colName = getColNameMatchingToken(colToken,t);
+            FieldType fType = t.getSchema().getFieldType(colName);
             if (fType == FieldType.INT) {
                 return getIntValue(tokenLeft,t) == getIntValue(tokenRight,t);
             } else {
@@ -279,15 +282,24 @@ public class whereClause {
     // return attribute name if natural join needs to be applied
     // eg: tokensInPostFix = <name, name, = >
     public String getNaturalJoinAttribute() {
+        //in case of t1.name, t2.name, compare and return name
         for (int i=2;i<tokensInPostFix.size();i++) {
             if (tokensInPostFix.get(i).equals("=")) {
                 String token1 = tokensInPostFix.get(i-2);
                 String token2 = tokensInPostFix.get(i-1);
-                if (getTokenType(token1) == TokenType.COL_NAME && getTokenType(token2) == TokenType.COL_NAME && token1.equals(token2)) {
+                if (getTokenType(token1) == TokenType.COL_NAME && getTokenType(token2) == TokenType.COL_NAME && Helper.removeTableNameAndDotIfExists(token1).equals(Helper.removeTableNameAndDotIfExists(token2))) {
                     return token1;
                 }
-            }
+        }
         }
         return null;
+    }
+
+    public String getColNameMatchingToken(String token,Tuple t){
+        if (t.getSchema().fieldNameExists(token)) //cases like (token=name, schema contains name) or (token=table1.name, schema contains table1.name)
+            return token;
+        else if (t.getSchema().fieldNameExists(Helper.removeTableNameAndDotIfExists(token))) // cases like (token=table1.name and schema contains name) (single table)
+            return Helper.removeTableNameAndDotIfExists(token);
+        else return null;//error case
     }
 }
