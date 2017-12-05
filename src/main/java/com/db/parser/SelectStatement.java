@@ -1,9 +1,6 @@
 package com.db.parser;
 
-import com.db.operations.CompareTuplesSort;
-import com.db.operations.Distinct;
-import com.db.operations.NaturalJoin;
-import com.db.operations.Sort;
+import com.db.operations.*;
 import com.db.storageManager.*;
 
 import java.io.BufferedWriter;
@@ -76,13 +73,20 @@ public class SelectStatement {
             //todo then add it for common attributes
             if (tables.size()>1){//MULTI TABLE CASE
                 //System.out.println("multi table");
-                if (where){
+
+                ArrayList<Tuple> result = CrossJoin.crossJoin(schemaManager.getRelation(tables.get(0)),schemaManager.getRelation(tables.get(1)),mem,schemaManager);
+                System.out.println(result.size());
+                projectAndOutput(result,attrs,star);
+                //todo - uncomment after testing cross join
+               /* if (where){
                     String naturalJoinColumn = wc.getNaturalJoinAttribute();
                     if(naturalJoinColumn!=null){
                         //natural join can be performed
                         NaturalJoin.naturalJoin(mem, schemaManager, tables.get(0), tables.get(1), naturalJoinColumn ); //todo can give 'name' only here
                     }
-                }
+                } */
+
+
 
                 //get arraylist result=natural join and newly generated relation name. use these to do distinct, order by. probably same for cross join
 
