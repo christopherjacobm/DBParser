@@ -21,12 +21,13 @@ public class CompareTuplesMin implements Comparator<Tuple> {
 			}
 			
 			String valueOne = tupleOne.getField(fieldName).toString();
-			String valueTwo = tupleOne.getField(fieldName).toString();
+			String valueTwo = tupleTwo.getField(fieldName).toString();
 			// if the field is an int
 			if(CommonHelper.isStringInt(valueOne) && CommonHelper.isStringInt(valueTwo)) {
 				return CommonHelper.stringToInteger(valueOne)- CommonHelper.stringToInteger(valueTwo);
 			}
 			else {
+				System.out.println(valueOne.compareTo(valueTwo) + " value 1 " +valueOne + "value 2" + valueTwo);
 				return valueOne.compareTo(valueTwo);
 			}
 		}

@@ -12,7 +12,7 @@ import com.db.storageManager.Tuple;
 
 public class CommonHelper {
 
-	public static Relation createRelation(Relation relation_one, Relation relation_two, SchemaManager schema_manager) {
+	public static Relation createRelation(Relation relation_one, Relation relation_two, SchemaManager schema_manager, String operationName) {
 		// field names and field types of relation one
 		ArrayList<String> field_names = relation_one.getSchema().getFieldNames();
 		ArrayList<String> field_names_two = relation_two.getSchema().getFieldNames();
@@ -37,7 +37,7 @@ public class CommonHelper {
 		
 		Schema schema = new Schema(field_names, field_types);
 		
-		String relation_name = relation_one.getRelationName() + "NaturalJoin" + relation_two.getRelationName();
+		String relation_name = relation_one.getRelationName() + operationName + relation_two.getRelationName();
 		if(schema_manager.relationExists(relation_name)) {
 			schema_manager.deleteRelation(relation_name);
 		}
@@ -207,7 +207,7 @@ public class CommonHelper {
 		int last_element = sublist.size() -1;
 		// if the blocks in memory are empty, bring in the next block from disk
 		for(int i =0 ; i < sublist.size(); i++) {
-			if(relationTuples.get(i).size() == 0) {
+			if(relationTuples.get(i).isEmpty()) {
 				// not last element and there are more blocks to read from the sublist
 				if(i < last_element && blocksRead[i] < mem.getMemorySize()) {							// if not the last element in the arraylist, that last sublist does not gurantee to have 10 bloacks
 					relation.getBlock(sublist.get(i) + blocksRead[i], i + startingIndex);

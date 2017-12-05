@@ -19,7 +19,7 @@ public class OnePassNaturalJoin {
 		Relation tableTwo = schema_manager.getRelation(relationTwo);
 		
 		// create a new relation for the output
-		Relation result_relation = CommonHelper.createRelation(tableOne, tableTwo, schema_manager);
+		Relation result_relation = CommonHelper.createRelation(tableOne, tableTwo, schema_manager, "NaturalJoin");
 		
 		// find the size of relation one
 		int tableOneSize = tableOne.getNumOfBlocks();
@@ -72,8 +72,10 @@ public class OnePassNaturalJoin {
 		return result;
 	}
 	
+
 	public static void compareTupleValues(ArrayList<Tuple> result, Tuple largeTuple, Tuple smallTuple, String joinAttribute, Relation relation,int tableOneSize, int tableTwoSize ) {
 		//System.out.println("in comparetuplevalues, fieldnames: "+relation.getSchema().getFieldNames());
+
 		Tuple joinedTuple;
 		String fieldOne = smallTuple.getField(joinAttribute).toString();
 		String fieldTwo =  largeTuple.getField(joinAttribute).toString();
