@@ -29,6 +29,15 @@ public class CommonHelper {
 			}
 		} */
 		//todo uncomment for nat join
+
+		for(int i=0;i<field_names.size();i++) {
+			String colName = field_names.get(i);
+			if (field_names_two.contains(colName)) {//remove the common field name (assuming only one is common)
+				//rename both to tablename+attrname
+				field_names.set(i, relation_one.getRelationName() + '.' + colName);
+				field_names_two.set(field_names_two.indexOf(colName), relation_two.getRelationName() + '.' + colName);
+			}
+		}
 		
 		// append all the field names of relation two to relation one field names
 		field_names.addAll(field_names_two);

@@ -1,5 +1,7 @@
 package com.db.parser;
 
+import com.db.storageManager.Tuple;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -58,5 +60,13 @@ public class Helper {
         int dotIndex = str.indexOf('.');
         if (dotIndex == -1) return str;
         else return str.substring(dotIndex+1);
+    }
+
+    public static String getColNameMatchingToken(String token,Tuple t){
+        if (t.getSchema().fieldNameExists(token)) //cases like (token=name, schema contains name) or (token=table1.name, schema contains table1.name)
+            return token;
+        else if (t.getSchema().fieldNameExists(Helper.removeTableNameAndDotIfExists(token))) // cases like (token=table1.name and schema contains name) (single table)
+            return Helper.removeTableNameAndDotIfExists(token);
+        else return null;//error case
     }
 }
