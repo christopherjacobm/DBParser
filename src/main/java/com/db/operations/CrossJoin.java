@@ -27,9 +27,12 @@ public class CrossJoin {
 		// if the smaller relation fits in the main memory
 		if(smallerRelation.getNumOfBlocks() < mem.getMemorySize() -1) {
 			// result = onePassCrossJoin(smallerRelation, largerRelation);
+			result = OnePassCrossJoin(smallerRelation, largerRelation, schema_manager,mem);
 		}
 		else {   // the smaller relation does not fit in the main memory
-			result = twoPassCrossJoin(relation_one, relation_two, schema_manager, mem);
+			//result = twoPassCrossJoin(relation_one, relation_two, schema_manager, mem);
+			System.out.println("two pass cross join!");
+			result = twoPassCrossJoinOptimized(relation_one,relation_two,schema_manager,mem);
 		}
 		return result;
 	}
@@ -89,7 +92,10 @@ public class CrossJoin {
 	
 		// rewad all the blocks of the small relation in the memory
 		int smallRelation_size = smallRelation.getNumOfBlocks();
-		smallRelation.getBlocks(0, 0, smallRelation_size);	
+		System.out.println("smallRelation_size: "+smallRelation_size);
+		smallRelation.getBlocks(0, 0, smallRelation_size);
+		//smallRelation.getBlocks()
+		System.out.println("smallRelation_size: "+smallRelation_size);
 		
 		int largeRelation_size = largerRelation.getNumOfBlocks();
 		
@@ -186,10 +192,14 @@ public class CrossJoin {
 			read_large_blocks += 5;
 			 
 		}
-		
+
+		read_small_blocks=0;
+
 		if(remaining_blocks_top > 0) {
 			larger.getBlocks(read_large_blocks, 0, remaining_blocks_top);
 			large_tuples = mem.getTuples(0, remaining_blocks_top);
+
+
 			
 			for(int j = 0; j < loop_inner_bottom; j++) {
 				smaller.getBlocks(read_small_blocks, 5, 5);
@@ -212,7 +222,7 @@ public class CrossJoin {
 	public static ArrayList<Tuple> crossJoinHelper(ArrayList<Tuple> top_tuples, ArrayList<Tuple> bottom_tuples, ArrayList<Tuple> result, Relation output_relation) {
 		for (Tuple tupleSmall : top_tuples) {
 			for (Tuple tupleLarge : bottom_tuples) {
-				result.add(CommonHelper.joinTuples(tupleSmall, tupleLarge, output_relation, null));
+				result.add(CommonHelper.joinTuples(tupleSmall, tupleLarge, output_relation,null));
 			}
 		}
 		return result;
