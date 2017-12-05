@@ -25,7 +25,6 @@ public class SelectStatement {
 
         // if the string is matched
         if (match.find()) {
-            //System.out.println("\n Select parse values are " + "\n" + match.group(1) + "\n" + match.group(2) + "\n" + match.group(3) + "\n" + match.group(4));
 
             boolean distinct=false;
             boolean star=false;
@@ -46,15 +45,6 @@ public class SelectStatement {
             }
 
             ArrayList<String> tables = Helper.trimAndSplitByComma(match.group(4));
-            //System.out.println("tables: "+tables);
-
-            /* System.out.println("groupcount: "+match.groupCount());
-            System.out.println("group 3: "+match.group(3));
-            System.out.println("group 4: "+match.group(4));
-            System.out.println("group 5: "+match.group(5));
-            System.out.println("group 6: "+match.group(6));
-            System.out.println("group 7: "+match.group(7));
-            System.out.println("group 8: "+match.group(8)); */
 
             if (match.group(5)!=null){//where exists
                 where=true;
@@ -64,48 +54,51 @@ public class SelectStatement {
             if (match.group(7)!=null){//order by exists
                 orderBy=true;
                 orderByColumnName = match.group(8).trim();
-                //System.out.println("orderByColumnName: "+orderByColumnName);
             }
 
             //=================PARSING DONE========================
-            //todo in case of cross join/ nat join, have to keep ALL COMMON COLUMN NAMES in t.name style attributes
-            //first remove all tablenames from attribute names for new table
             //todo add tablename to newtable's schema for common attributes
+
             if (tables.size()>1){//MULTI TABLE CASE
                 //todo print column titles
                 //System.out.println("multi table");
 
-                ArrayList<Tuple> result = CrossJoin.crossJoin(schemaManager.getRelation(tables.get(0)),schemaManager.getRelation(tables.get(1)),mem,schemaManager);
-                System.out.println(result.size());
+                ArrayList<Tuple> result = null;
+
+
+                if (where && wc.getNaturalJoinAttribute()!=null) {
+                        //natural join can be performed
+                    result = NaturalJoin.naturalJoin(mem, schemaManager, tables.get(0), tables.get(1),wc.getNaturalJoinAttribute() );
+                } else {//do cross join
+                    result = CrossJoin.crossJoin(schemaManager.getRelation(tables.get(0)),schemaManager.getRelation(tables.get(1)),mem,schemaManager);
+                }
+
+                //System.out.println(result.size());
                 //filter array by where first?? projection last??
 
                 if (where) result = applyWhere(result,wc);
 
                 Relation tempRel = null;
 
-                if(!result.isEmpty()) {
+               if(!result.isEmpty()) {
 
                     if (distinct || orderBy) {
                         tempRel = writeToNewTempRelation(mem, schemaManager, result, result.get(0).getSchema(), tables.get(0) + tables.get(1));
                     }
 
                     if (distinct && !orderBy) {
-                        System.out.println("Calling distinct now");
                         if (star) result = Distinct.distinct(tempRel, mem, tempRel.getSchema().getFieldNames());
                         else result = Distinct.distinct(tempRel, mem, attrs);
-                        projectAndOutput(result, attrs, star);
                     }
 
                     if (orderBy && !distinct) {
                         ArrayList<String> sortColumn = new ArrayList<>();
                         sortColumn.add(orderByColumnName);
                         result = Sort.sort(tempRel, mem, sortColumn);
-                        projectAndOutput(result, attrs, star);
                     }
 
                     if (orderBy && distinct) {
                         if (tempRel.getNumOfBlocks() < mem.getMemorySize()) {
-                            System.out.println("Calling distinct now");
                             if (star) result = Distinct.distinct(tempRel, mem, tempRel.getSchema().getFieldNames());
                             else result = Distinct.distinct(tempRel, mem, attrs);
 
@@ -115,7 +108,6 @@ public class SelectStatement {
 
                             //result = Sort.sort(tempRel, mem, sortColumn);
                         } else { //2 pass
-                            System.out.println("Calling  2 pass distinct now");
                             if (star) result = Distinct.distinct(tempRel, mem, tempRel.getSchema().getFieldNames());
                             else result = Distinct.distinct(tempRel, mem, attrs);
 
@@ -126,40 +118,23 @@ public class SelectStatement {
                             result = Sort.sort(tempRelDistinct, mem, sortColumn);
                         }
 
-                        projectAndOutput(result, attrs, star);
                     }
 
                 }
-
-
-                //todo - uncomment after testing cross join
-               /* if (where){
-                    String naturalJoinColumn = wc.getNaturalJoinAttribute();
-                    if(naturalJoinColumn!=null){
-                        //natural join can be performed
-                        NaturalJoin.naturalJoin(mem, schemaManager, tables.get(0), tables.get(1), naturalJoinColumn );
-                    }
-                } */
-
-
-
+                printToConsoleAndFile("\n========================================\n");
+                outputColumnTitles(result, attrs, star);
+                printToConsoleAndFile("----------------------------------------\n");
+                projectAndOutput(result, attrs, star);
+                printToConsoleAndFile("========================================\n\n");
                 //get arraylist result=natural join and newly generated relation name. use these to do distinct, order by. probably same for cross join
 
             } else {//SINGLE TABLE CASE
+                //System.out.println("Single table case!");
 
                 String relName = tables.get(0);
                 Relation r = schemaManager.getRelation(relName);
                 Schema schema = r.getSchema();
                 int numBlocksInRelation = r.getNumOfBlocks();
-
-                //from attrs, orderby attr, remove dot and everything before it
-                //for(int i=0;i<attrs.size();i++){
-                //    attrs.set(i,Helper.removeTableNameAndDotIfExists(attrs.get(i)));
-                //}
-                //if (orderBy) orderByColumnName = Helper.removeTableNameAndDotIfExists(orderByColumnName);
-
-                //System.out.println("attrs after removal: "+attrs);
-                //System.out.println("orderByColumnName after removal: "+orderByColumnName);
 
                 //=================PRINTING HEADINGS====================
 
@@ -179,7 +154,7 @@ public class SelectStatement {
                     printToConsoleAndFile("\n");
                 }
 
-                printToConsoleAndFile("========================================\n");
+                printToConsoleAndFile("-------------------------------------------\n");
 
                 //=======================================================
 
@@ -203,7 +178,7 @@ public class SelectStatement {
                 if (distinct || orderBy) {
                     if (!star) {
                         for (String fName : relevantFieldNames)
-                            relevantFieldTypes.add(schema.getFieldType(fName));
+                            relevantFieldTypes.add(schema.getFieldType(Helper.removeTableNameAndDotIfExists(fName)));
                         //make a schema with only relevant fields
                         Schema schemaTemp = new Schema(relevantFieldNames, relevantFieldTypes);
                         //make a temp relation
@@ -211,17 +186,11 @@ public class SelectStatement {
                     }
                     String tempRelName = relName + "temp";
                     tempRel = schemaManager.createRelation(tempRelName, schema);
-                    System.out.println("tempRel's fields: " + tempRel.getSchema().getFieldNames());
                     lastBlock = mem.getBlock(mem.getMemorySize() - 1); //gets the last block of mem
                     lastBlock.clear();
                 }
 
                 //--OPTIMIZING BASED ON PROJECTION DONE
-
-
-                //System.out.println("tables: " + tables);
-                //System.out.println("attrs: " + attrs);
-                //System.out.println("relevantFieldNames: " + relevantFieldNames);
 
 
                 //todo distinct, order by
@@ -280,7 +249,7 @@ public class SelectStatement {
                                 if (distinct || orderBy) {
                                     Tuple tempTuple = tempRel.createTuple();
                                     for (String fName : relevantFieldNames) {
-                                        f = t.getField(fName);
+                                        f = t.getField(Helper.removeTableNameAndDotIfExists(fName));
                                         if (f.type == FieldType.INT)
                                             tempTuple.setField(fName, f.integer);
                                         else
@@ -295,7 +264,7 @@ public class SelectStatement {
                                     }
                                 } else {
                                     for (String fName : relevantFieldNames) {//loop thru relevantfieldnames (same as attrs here)
-                                        f = t.getField(fName);
+                                        f = t.getField(Helper.removeTableNameAndDotIfExists(fName));
                                         //if (distinct or order) write to temp relation instead of printing
                                         printToConsoleAndFile(f.toString() + " ");
                                     }
@@ -320,7 +289,6 @@ public class SelectStatement {
                     ArrayList<Tuple> result;
 
                     if (distinct && !orderBy){
-                        System.out.println("Calling distinct now");
                         if (star) result = Distinct.distinct(tempRel, mem, tempRel.getSchema().getFieldNames());
                         else result = Distinct.distinct(tempRel, mem, attrs);
 
@@ -342,7 +310,6 @@ public class SelectStatement {
 
                     if(orderBy && distinct){
                         if(tempRel.getNumOfBlocks() < mem.getMemorySize()) {
-                            System.out.println("Calling distinct now");
                             if (star) result = Distinct.distinct(tempRel, mem, tempRel.getSchema().getFieldNames());
                             else result = Distinct.distinct(tempRel, mem, attrs);
 
@@ -352,7 +319,6 @@ public class SelectStatement {
 
                             //result = Sort.sort(tempRel, mem, sortColumn);
                         } else { //2 pass
-                            System.out.println("Calling  2 pass distinct now");
                             if (star) result = Distinct.distinct(tempRel, mem, tempRel.getSchema().getFieldNames());
                             else result = Distinct.distinct(tempRel, mem, attrs);
 
@@ -393,6 +359,19 @@ public class SelectStatement {
             }
             printToConsoleAndFile("\n");
         }
+    }
+
+    private void outputColumnTitles (ArrayList<Tuple> tuples, ArrayList<String> attributes, boolean star){
+            Tuple tuple = tuples.get(0);
+            if(star){
+                for (String fName: tuple.getSchema().getFieldNames()) printToConsoleAndFile(fName);
+            } else {
+                for (String fName : attributes) {//loop thru attrs
+                    String colName = Helper.getColNameMatchingToken(fName,tuple);
+                    printToConsoleAndFile(colName+ " ");
+                }
+            }
+            printToConsoleAndFile("\n");
     }
 
     private void projectApplyWhereAndOutput (ArrayList<Tuple> tuples, ArrayList<String> attributes, boolean star, boolean where, whereClause wc){

@@ -3,6 +3,7 @@ package com.db.operations;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import com.db.parser.Helper;
 import com.db.storageManager.FieldType;
 import com.db.storageManager.MainMemory;
 import com.db.storageManager.Relation;
@@ -21,21 +22,24 @@ public class CommonHelper {
 		ArrayList<FieldType> field_types = relation_one.getSchema().getFieldTypes();
 		ArrayList<FieldType> field_types_two = relation_two.getSchema().getFieldTypes();
 
-		/*for(int i=0;i<field_names.size();i++){
-			if (field_names_two.contains(field_names.get(i))) {//remove the common field name (assuming only one is common)
-				field_names.remove(i);
-				field_types.remove(i);
-				break;
+		if(operationName.equals("NaturalJoin")) {
+			for (int i = 0; i < field_names.size(); i++) {
+				if (field_names_two.contains(field_names.get(i))) {//remove the common field name (assuming only one is common)
+					field_names.remove(i);
+					field_types.remove(i);
+					break;
+				}
 			}
-		} */
+		}
 		//todo uncomment for nat join
-
-		for(int i=0;i<field_names.size();i++) {
-			String colName = field_names.get(i);
-			if (field_names_two.contains(colName)) {//remove the common field name (assuming only one is common)
-				//rename both to tablename+attrname
-				field_names.set(i, relation_one.getRelationName() + '.' + colName);
-				field_names_two.set(field_names_two.indexOf(colName), relation_two.getRelationName() + '.' + colName);
+		else { //cross join case
+			for (int i = 0; i < field_names.size(); i++) {
+				String colName = field_names.get(i);
+				if (field_names_two.contains(colName)) {//remove the common field name (assuming only one is common)
+					//rename both to tablename+attrname
+					field_names.set(i, relation_one.getRelationName() + '.' + colName);
+					field_names_two.set(field_names_two.indexOf(colName), relation_two.getRelationName() + '.' + colName);
+				}
 			}
 		}
 		
@@ -53,7 +57,7 @@ public class CommonHelper {
 		}
 
 		Relation relation = schema_manager.createRelation(relation_name, schema);
-		//System.out.println("in createRelation: field names- "+schema.getFieldNames());
+		////System.out.println("in createRelation: field names- "+schema.getFieldNames());
 		return relation;
 	}
 	
@@ -175,7 +179,7 @@ public class CommonHelper {
 			// read severals blocks from the disk and store in the main memory
 			relation.getBlocks(sortedBlocks, 0, num_blocks);
 
-			System.out.println("inside the while loop********************************************8f");
+			//System.out.println("inside the while loop********************************************8f");
 			// read all the tuples stored in the main memory starting from block index 0 to num_blocks
 			ArrayList<Tuple> tuples = mem.getTuples(0, num_blocks);
 			
@@ -203,7 +207,7 @@ public class CommonHelper {
 
 	
 	public static ArrayList<ArrayList<Tuple>> readBlockFromSublist(ArrayList<Integer> sublist, Relation relation, MainMemory mem, ArrayList<ArrayList<Tuple>> relationTuples, int startingIndex, int[] blocksRead_tableOne) {
-		System.out.print("Inside readBlockFromSublist : sublist_size" + sublist.size());
+		//System.out.print("Inside readBlockFromSublist : sublist_size" + sublist.size());
 		// read one block from each sublist in relation One into the main memory
 		for(int i = 0; i < sublist.size(); i++) {
 			relation.getBlock(sublist.get(i), i + startingIndex);            			// read one block from relation and store it in the main memory at the given index

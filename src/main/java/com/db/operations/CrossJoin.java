@@ -31,7 +31,7 @@ public class CrossJoin {
 		}
 		else {   // the smaller relation does not fit in the main memory
 			//result = twoPassCrossJoin(relation_one, relation_two, schema_manager, mem);
-			System.out.println("two pass cross join!");
+			//System.out.println("two pass cross join!");
 			result = twoPassCrossJoinOptimized(relation_one,relation_two,schema_manager,mem);
 		}
 		return result;
@@ -42,16 +42,16 @@ public class CrossJoin {
 		// create a new relation for the output
 		Relation output_relation = CommonHelper.createRelation(smallRelation, largerRelation, schema_manager, "OnePassCrossJoin");
 
-		System.out.println("outputrelation schema:"+output_relation.getSchema().getFieldNames());
+		//System.out.println("outputrelation schema:"+output_relation.getSchema().getFieldNames());
 
 		ArrayList<Tuple> result = new ArrayList<Tuple>();
 	
 		// rewad all the blocks of the small relation in the memory
 		int smallRelation_size = smallRelation.getNumOfBlocks();
-		System.out.println("smallRelation_size: "+smallRelation_size);
+		//System.out.println("smallRelation_size: "+smallRelation_size);
 		smallRelation.getBlocks(0, 0, smallRelation_size);
 		//smallRelation.getBlocks()
-		System.out.println("smallRelation_size: "+smallRelation_size);
+		//System.out.println("smallRelation_size: "+smallRelation_size);
 		
 		int largeRelation_size = largerRelation.getNumOfBlocks();
 		
@@ -95,7 +95,7 @@ public class CrossJoin {
 		// create a new relation for the output
 		Relation output_relation = CommonHelper.createRelation(relationOne, relationTwo, schema_manager, "TwoPassCrossJoin");
 
-		System.out.println("outputrelation schema:"+output_relation.getSchema().getFieldNames());
+		//System.out.println("outputrelation schema:"+output_relation.getSchema().getFieldNames());
 	
 		ArrayList<Tuple> result = new ArrayList<Tuple>();
 		// rewad all the blocks of the small relation in the memory

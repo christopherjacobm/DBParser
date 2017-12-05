@@ -27,7 +27,7 @@ public class CompareTuplesMin implements Comparator<Tuple> {
 				return CommonHelper.stringToInteger(valueOne)- CommonHelper.stringToInteger(valueTwo);
 			}
 			else {
-				System.out.println(valueOne.compareTo(valueTwo) + " value 1 " +valueOne + "value 2" + valueTwo);
+				//System.out.println(valueOne.compareTo(valueTwo) + " value 1 " +valueOne + "value 2" + valueTwo);
 				return valueOne.compareTo(valueTwo);
 			}
 		}

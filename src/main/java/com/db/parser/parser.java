@@ -30,7 +30,7 @@ public class parser {
 		try {  //make a new output file
 			File outFile = new File("Output.txt");
 			boolean res = Files.deleteIfExists(outFile.toPath());
-			System.out.println("file deletion successful? :"+res);
+			//System.out.println("file deletion successful? :"+res);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -111,6 +111,7 @@ public class parser {
 					select.parseSelectStatement(mem, schema_manager, statement);
 					System.out.printf("Select Time: %.2f ms", (disk.getDiskTimer() - time));
 					System.out.println("\nSelect IO's: " + (disk.getDiskIOs() - ios));
+					System.out.println();
 					break;
 				case "drop":
 					dropStatement drop = new dropStatement();
