@@ -94,31 +94,33 @@ public class parser {
 	
 	public static void executeStatement(String statementType, String statement, MainMemory mem, Disk disk) {
 		//System.out.println("executestatement for: "+statementType+" stmnt: "+statement);
-		switch (statementType.toLowerCase()) {
-		case "create":
-			createStatement create = new createStatement();
-			create.parseCreateStatement(mem, statement, schema_manager);
-			break;
-		case "insert":
-			InsertStatement insert = new InsertStatement();
-			insert.parseInsertStatement(mem, statement, schema_manager);
-			break;
-		case "select":
-			double time = disk.getDiskTimer();
-			long ios = disk.getDiskIOs();
-			SelectStatement select = new SelectStatement(bw);
-			select.parseSelectStatement(mem,schema_manager,statement);
-			System.out.printf("Select Time: %.2f ms",(disk.getDiskTimer() - time));
-			System.out.println("\nSelect IO's: "+(disk.getDiskIOs() - ios));
-			break;
-		case "drop":
-			dropStatement drop = new dropStatement();
-			drop.parseDeleteStatement(statement, schema_manager);
-			break;
-		case "delete":	
-			deleteStatement delete = new deleteStatement();
-			delete.parseDeleteStatement(statement, schema_manager, mem);
-			break;
+		if (statementType!=null) {
+			switch (statementType.toLowerCase()) {
+				case "create":
+					createStatement create = new createStatement();
+					create.parseCreateStatement(mem, statement, schema_manager);
+					break;
+				case "insert":
+					InsertStatement insert = new InsertStatement();
+					insert.parseInsertStatement(mem, statement, schema_manager);
+					break;
+				case "select":
+					double time = disk.getDiskTimer();
+					long ios = disk.getDiskIOs();
+					SelectStatement select = new SelectStatement(bw);
+					select.parseSelectStatement(mem, schema_manager, statement);
+					System.out.printf("Select Time: %.2f ms", (disk.getDiskTimer() - time));
+					System.out.println("\nSelect IO's: " + (disk.getDiskIOs() - ios));
+					break;
+				case "drop":
+					dropStatement drop = new dropStatement();
+					drop.parseDeleteStatement(statement, schema_manager);
+					break;
+				case "delete":
+					deleteStatement delete = new deleteStatement();
+					delete.parseDeleteStatement(statement, schema_manager, mem);
+					break;
+			}
 		}
 	}
 }
