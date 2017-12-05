@@ -3,6 +3,7 @@ package com.db.operations;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import com.db.parser.Helper;
 import com.db.storageManager.MainMemory;
 import com.db.storageManager.Relation;
 import com.db.storageManager.Tuple;
@@ -73,7 +74,7 @@ public class FindDistinct {
 			return false;
 		}
 		for(String field : fieldNames) {
-			if(!(tupleOne.getField(field).toString().equals(tupleTwo.getField(field).toString()))) {
+			if(!(tupleOne.getField(Helper.getColNameMatchingToken(field,tupleOne)).toString().equals(tupleTwo.getField(Helper.getColNameMatchingToken(field,tupleTwo)).toString()))) {
 				return false;
 			}
 		}

@@ -2,6 +2,7 @@ package com.db.operations;
 import java.util.ArrayList;
 import java.util.Comparator;
 
+import com.db.parser.Helper;
 import com.db.storageManager.Tuple;
 
 public class CompareTuplesSort implements Comparator<Tuple>{
@@ -23,8 +24,8 @@ public class CompareTuplesSort implements Comparator<Tuple>{
 			return -1;
 		}
 		for(int i = 0; i < sortByAttributes.size(); i++) {
-			fieldOne_value = tupleOne.getField(sortByAttributes.get(i)).toString();		// get field value from first tuple
-			fieldTwo_value = tupleTwo.getField(sortByAttributes.get(i)).toString();		// get field value from second tuple
+			fieldOne_value = tupleOne.getField(Helper.getColNameMatchingToken(sortByAttributes.get(i),tupleOne)).toString();		// get field value from first tuple
+			fieldTwo_value = tupleTwo.getField(Helper.getColNameMatchingToken(sortByAttributes.get(i),tupleTwo)).toString();		// get field value from second tuple
 			// check if the values are integer
 			if(CommonHelper.isStringInt(fieldOne_value) && CommonHelper.isStringInt(fieldTwo_value)) {
 				output[i] = CommonHelper.stringToInteger(fieldOne_value) - CommonHelper.stringToInteger(fieldTwo_value);

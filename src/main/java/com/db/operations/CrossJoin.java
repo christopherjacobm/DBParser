@@ -36,58 +36,14 @@ public class CrossJoin {
 		}
 		return result;
 	}
-	
-	public static ArrayList<Tuple> twoPassCrossJoin(Relation relationOne, Relation relationTwo, SchemaManager schema_manager, MainMemory mem) {
-		// create a new relation for the output
-		Relation output_relation = CommonHelper.createRelation(relationOne, relationTwo, schema_manager, "TwoPassCrossJoin");
-	
-		ArrayList<Tuple> result = new ArrayList<Tuple>();
-		
-		for(int i = 0; i < relationOne.getNumOfBlocks(); i++) {
-			 relationOne.getBlock(i, 0);							// get one block of relation one from the memory
-			 //relationOne.getBlocks(i, 0, 5);
-			 for(int j = 0; j < relationTwo.getNumOfBlocks(); j++) {
-				 relationOne.getBlock(j, 1);
-				 //relationOne.getBlocks(j, 5, 5);
-				 for(Tuple tupleOne : mem.getBlock(0).getTuples()) {
-					 for(Tuple tupleTwo : mem.getBlock(1).getTuples()) {			 
-						 result.add(CommonHelper.joinTuples(tupleOne, tupleTwo, output_relation, null));
-					 }
-				 }
-			 }
-			 
-		}
-		return result;
-	}
-	
-	
-//	// bring in 5  blocks at a time
-//	public static ArrayList<Tuple> twoPassCrossJoin2(Relation relationOne, Relation relationTwo, SchemaManager schema_manager, MainMemory mem) {
-//		// create a new relation for the output
-//		Relation output_relation = CommonHelper.createRelation(relationOne, relationTwo, schema_manager, "TwoPassCrossJoin");
-//	
-//		ArrayList<Tuple> result = new ArrayList<Tuple>();
-//		
-//		for(int i = 0; i < relationOne.getNumOfBlocks(); i = i+5) {
-//			 // get 5 blocks of relation one from the memory
-//			 relationOne.getBlocks(i, 0, 5);
-//			 for(int j = 0; j < relationTwo.getNumOfBlocks(); j= j+5) {
-//				 relationOne.getBlocks(j, 5, 5);  ;
-//				 for(Tuple tupleOne : mem.getTuples(0, 5)) {
-//					 for(Tuple tupleTwo : mem.getTuples(5, 5)) {			 
-//						 result.add(CommonHelper.joinTuples(tupleOne, tupleTwo, output_relation, null));
-//					 }
-//				 }
-//			 }
-//			 
-//		}
-//		return result;
-//	}
+
 	
 	public static ArrayList<Tuple> OnePassCrossJoin(Relation smallRelation, Relation largerRelation, SchemaManager schema_manager, MainMemory mem) {
 		// create a new relation for the output
 		Relation output_relation = CommonHelper.createRelation(smallRelation, largerRelation, schema_manager, "OnePassCrossJoin");
-	
+
+		System.out.println("outputrelation schema:"+output_relation.getSchema().getFieldNames());
+
 		ArrayList<Tuple> result = new ArrayList<Tuple>();
 	
 		// rewad all the blocks of the small relation in the memory
@@ -138,6 +94,8 @@ public class CrossJoin {
 	public static ArrayList<Tuple> twoPassCrossJoinOptimized(Relation relationOne, Relation relationTwo, SchemaManager schema_manager, MainMemory mem) {
 		// create a new relation for the output
 		Relation output_relation = CommonHelper.createRelation(relationOne, relationTwo, schema_manager, "TwoPassCrossJoin");
+
+		System.out.println("outputrelation schema:"+output_relation.getSchema().getFieldNames());
 	
 		ArrayList<Tuple> result = new ArrayList<Tuple>();
 		// rewad all the blocks of the small relation in the memory
@@ -190,6 +148,7 @@ public class CrossJoin {
 				result = crossJoinHelper(large_tuples, small_tuples, result, output_relation);
 			}
 			read_large_blocks += 5;
+			read_small_blocks=0;
 			 
 		}
 
